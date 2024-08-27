@@ -1,4 +1,4 @@
-package xt.qc.tappidigi
+package xt.qc.tappidigi.utils
 
 import platform.UIKit.UIDevice
 

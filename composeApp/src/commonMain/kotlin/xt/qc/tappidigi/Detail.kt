@@ -4,8 +4,8 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material.Button
-import androidx.compose.material.Text
+import androidx.compose.material3.Button
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -17,6 +17,7 @@ import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
 import tappidigi.composeapp.generated.resources.Res
 import tappidigi.composeapp.generated.resources.compose_multiplatform
+import xt.qc.tappidigi.utils.Platform
 
 @Composable
 fun Detail() {
