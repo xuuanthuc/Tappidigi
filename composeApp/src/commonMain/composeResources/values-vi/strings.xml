@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="home">Home</string>
-    <string name="communities">Communities</string>
-    <string name="messages">Messages</string>
-    <string name="create">Create</string>
-    <string name="profile">Profile</string>
+    <string name="home">Trang chủ</string>
+    <string name="communities">Cộng đồng</string>
+    <string name="messages">Tin nhắn</string>
+    <string name="create">Tạo</string>
+    <string name="profile">Hồ sơ</string>
 </resources>

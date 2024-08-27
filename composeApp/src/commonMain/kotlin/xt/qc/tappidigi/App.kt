@@ -8,7 +8,12 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
@@ -35,57 +40,58 @@ fun App() {
             val navController: NavHostController = rememberNavController()
             val navBackStackEntry by navController.currentBackStackEntryAsState()
             val currentDestination = navBackStackEntry?.destination
-            Scaffold(
-                bottomBar = {
-                    Row {
-                        BottomNavigation.entries.forEach { item ->
-                            NavigationBarItem(
-                                icon = { Icon(item.icon, contentDescription = null) },
-                                label = { Text(stringResource(item.title), fontSize = 8.sp, fontWeight = FontWeight.Normal) },
-                                selected = currentDestination?.hierarchy?.any { it.route == item.name } == true,
-                                onClick = {
-                                    navController.navigate(item.name) {
-                                        // Pop up to the start destination of the graph to
-                                        // avoid building up a large stack of destinations
-                                        // on the back stack as users select items
-                                        popUpTo(navController.graph.findStartDestination().id) {
-                                            saveState = true
-                                        }
-                                        // Avoid multiple copies of the same destination when
-                                        // reselecting the same item
-                                        launchSingleTop = true
-                                        // Restore state when reselecting a previously selected item
-                                        restoreState = false
+            Scaffold(bottomBar = {
+                Row {
+                    BottomNavigation.entries.forEach { item ->
+                        NavigationBarItem(icon = { Icon(item.icon, contentDescription = null) },
+                            label = {
+                                Text(
+                                    stringResource(item.title),
+                                    fontSize = 8.sp,
+                                    fontWeight = FontWeight.Normal
+                                )
+                            },
+                            selected = currentDestination?.hierarchy?.any { it.route == item.name } == true,
+                            onClick = {
+                                navController.navigate(item.name) {
+                                    // Pop up to the start destination of the graph to
+                                    // avoid building up a large stack of destinations
+                                    // on the back stack as users select items
+                                    popUpTo(navController.graph.findStartDestination().id) {
+                                        saveState = true
                                     }
+                                    // Avoid multiple copies of the same destination when
+                                    // reselecting the same item
+                                    launchSingleTop = true
+                                    // Restore state when reselecting a previously selected item
+                                    restoreState = false
                                 }
-                            )
-                        }
-                    }
-                },
-                content = {
-                    NavHost(
-                        navController = navController,
-                        startDestination = BottomNavigation.HOME.name,
-                        modifier = Modifier.fillMaxSize()
-                    ) {
-                        composable(route = BottomNavigation.HOME.name) {
-                            HomeScreen()
-                        }
-                        composable(route = BottomNavigation.COMMUNITIES.name) {
-                            CommunitiesScreen()
-                        }
-                        composable(route = BottomNavigation.CREATE.name) {
-                            CreateScreen()
-                        }
-                        composable(route = BottomNavigation.MESSAGE.name) {
-                            ChatScreen()
-                        }
-                        composable(route = BottomNavigation.PROFILE.name) {
-                            ProfileScreen()
-                        }
+                            })
                     }
                 }
-            )
+            }, content = {
+                NavHost(
+                    navController = navController,
+                    startDestination = BottomNavigation.HOME.name,
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    composable(route = BottomNavigation.HOME.name) {
+                        HomeScreen()
+                    }
+                    composable(route = BottomNavigation.COMMUNITIES.name) {
+                        CommunitiesScreen()
+                    }
+                    composable(route = BottomNavigation.CREATE.name) {
+                        CreateScreen()
+                    }
+                    composable(route = BottomNavigation.MESSAGE.name) {
+                        ChatScreen()
+                    }
+                    composable(route = BottomNavigation.PROFILE.name) {
+                        ProfileScreen()
+                    }
+                }
+            })
         }
     }
 }

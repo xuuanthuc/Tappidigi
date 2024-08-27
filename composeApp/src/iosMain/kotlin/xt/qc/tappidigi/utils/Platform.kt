@@ -1,5 +1,5 @@
 package xt.qc.tappidigi.utils
-
+import platform.Foundation.NSUserDefaults
 import platform.UIKit.UIDevice
 
 actual class Platform {
