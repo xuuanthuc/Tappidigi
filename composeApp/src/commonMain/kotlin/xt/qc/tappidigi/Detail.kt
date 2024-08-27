@@ -10,6 +10,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
 import tappidigi.composeapp.generated.resources.Res
@@ -24,10 +27,16 @@ fun Detail() {
         Button(onClick = { viewModel.onShowContentClicked() }) {
             Text("Click me!")
         }
+        Button(onClick = {
+            viewModel.viewModelScope.launch(Dispatchers.Main) {
+                viewModel.addData()
+            }
+        }) {
+            Text("Add data")
+        }
         AnimatedVisibility(viewModel.showContent.value) {
             Column(
-                Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally
+                Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Image(painterResource(Res.drawable.compose_multiplatform), null)
                 Text("Compose: $greeting")
