@@ -11,5 +11,6 @@ enum class BottomNavigation(val title: StringResource, val icon: ImageVector) {
     COMMUNITIES(Res.string.communities, Icons.Filled.Search),
     CREATE(Res.string.create, Icons.Filled.Add),
     MESSAGE(Res.string.messages, Icons.Filled.Email),
-    PROFILE(Res.string.profile , Icons.Filled.Person),
+    NOTIFICATION(Res.string.notification, Icons.Filled.Notifications),
+//    PROFILE(Res.string.profile , Icons.Filled.Person),
 }

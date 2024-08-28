@@ -37,6 +37,9 @@ kotlin {
             implementation(libs.koin.android)
             implementation(project.dependencies.platform(libs.firebase.bom))
             implementation(libs.firebase.analytics)
+            implementation (libs.androidx.credentials)
+            implementation (libs.androidx.credentials.play.services.auth)
+            implementation (libs.google.id)
         }
         commonMain.dependencies {
             implementation(compose.runtime)
@@ -52,6 +55,7 @@ kotlin {
             implementation(libs.navigation.compose)
             implementation(libs.firebase.firestore)
             implementation(libs.firebase.common)
+            implementation(libs.firebase.auth)
         }
     }
 }
@@ -92,8 +96,3 @@ android {
         debugImplementation(compose.uiTooling)
     }
 }
-dependencies {
-    implementation(libs.annotations)
-    implementation(libs.annotations)
-}
-

@@ -12,18 +12,24 @@ androidx-lifecycle = "2.8.0"
 androidx-material = "1.12.0"
 androidx-test-junit = "1.2.1"
 compose-plugin = "1.6.11"
+credentials = "1.2.2"
+firebaseAuth = "2.0.0"
 firebaseBom = "33.2.0"
 firebaseCommon = "2.0.0"
 firebaseFirestore = "2.0.0"
+googleid = "1.1.1"
 junit = "4.13.2"
 koinCore = "4.0.0-RC1"
 kotlin = "2.0.0"
 navigationCompose = "2.7.0-alpha07"
 google-services = "4.4.2"
-annotations = "15.0"
 
 [libraries]
+#noinspection CredentialDependency
+androidx-credentials = { module = "androidx.credentials:credentials", version.ref = "credentials" }
+androidx-credentials-play-services-auth = { module = "androidx.credentials:credentials-play-services-auth", version.ref = "credentials" }
 firebase-analytics = { module = "com.google.firebase:firebase-analytics" }
+firebase-auth = { module = "dev.gitlive:firebase-auth", version.ref = "firebaseAuth" }
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
 firebase-common = { module = "dev.gitlive:firebase-common", version.ref = "firebaseCommon" }
 firebase-firestore = { module = "dev.gitlive:firebase-firestore", version.ref = "firebaseFirestore" }
@@ -43,7 +49,7 @@ androidx-activity-compose = { module = "androidx.activity:activity-compose", ver
 androidx-lifecycle-viewmodel = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-viewmodel", version.ref = "androidx-lifecycle" }
 androidx-lifecycle-runtime-compose = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "androidx-lifecycle" }
 navigation-compose = { module = "org.jetbrains.androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
-annotations = { group = "org.jetbrains", name = "annotations", version.ref = "annotations" }
+google-id = { group = "com.google.android.libraries.identity.googleid", name = "googleid", version.ref = "googleid" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
