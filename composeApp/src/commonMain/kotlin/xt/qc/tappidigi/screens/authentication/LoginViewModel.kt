@@ -28,6 +28,7 @@ class LoginViewModel : ViewModel() {
                     val user = User(
                         auth.currentUser?.uid,
                         auth.currentUser?.email,
+                        auth.currentUser?.email?.replace("@gmail.com", ""),
                         auth.currentUser?.displayName,
                         auth.currentUser?.photoURL,
                     )

@@ -141,7 +141,6 @@ fun BottomBarItem(item: BottomNavigation, onTap: () -> Unit) {
                         Icon(
                             item.icon,
                             contentDescription = null,
-//                            modifier = Modifier.height(30.dp).width(30.dp),
                         )
                     },
                     contentPadding = PaddingValues(0.dp),

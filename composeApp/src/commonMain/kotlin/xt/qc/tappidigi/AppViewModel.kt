@@ -18,6 +18,7 @@ class AppViewModel : ViewModel() {
                 val user = User(
                     currentUser?.uid,
                     currentUser?.email,
+                    currentUser?.email?.replace("@gmail.com", ""),
                     currentUser?.displayName,
                     currentUser?.photoURL,
                 )
