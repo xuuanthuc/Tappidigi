@@ -41,6 +41,8 @@ kotlin {
             implementation (libs.androidx.credentials)
             implementation (libs.androidx.credentials.play.services.auth)
             implementation (libs.google.id)
+            implementation(libs.ktor.client.okhttp)
+            implementation(libs.ktor.client.android)
         }
         commonMain.dependencies {
             implementation(compose.runtime)
@@ -61,7 +63,11 @@ kotlin {
             implementation(libs.kotlinx.serialization.properties)
             implementation(libs.coil)
             implementation(libs.coil.compose)
-//            implementation(libs.coil.network.ktor2)
+            implementation(libs.ktor.client.core)
+            implementation(libs.coil.network.ktor3)
+        }
+        iosMain.dependencies {
+            implementation(libs.ktor.client.darwin)
         }
     }
 }
