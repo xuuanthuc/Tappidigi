@@ -8,6 +8,7 @@ plugins {
     alias(libs.plugins.jetbrainsCompose)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.google.services)
+    alias(libs.plugins.kotlinSerialization)
 }
 
 kotlin {
@@ -56,6 +57,11 @@ kotlin {
             implementation(libs.firebase.firestore)
             implementation(libs.firebase.common)
             implementation(libs.firebase.auth)
+            implementation(libs.kotlinx.serialization.json)
+            implementation(libs.kotlinx.serialization.properties)
+            implementation(libs.coil)
+            implementation(libs.coil.compose)
+//            implementation(libs.coil.network.ktor2)
         }
     }
 }

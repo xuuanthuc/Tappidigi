@@ -1,0 +1,11 @@
+package xt.qc.tappidigi.models
+
+import kotlinx.serialization.Serializable
+
+@Serializable
+data class User(
+    val uid: String? = null,
+    val email: String? = null,
+    val displayName: String? = null,
+    val photoUrl: String? = null,
+)
