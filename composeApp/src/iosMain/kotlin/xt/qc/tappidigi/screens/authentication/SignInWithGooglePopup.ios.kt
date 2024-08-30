@@ -8,7 +8,5 @@ actual class SignInWithGoogleManager {
     actual suspend fun getIdToken(): String? {
         return ""
     }
-
-    actual val firebaseAuth: FirebaseAuth = Firebase.auth
 }
 

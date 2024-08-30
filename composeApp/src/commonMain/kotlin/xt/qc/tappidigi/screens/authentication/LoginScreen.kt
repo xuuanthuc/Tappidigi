@@ -20,7 +20,7 @@ import xt.qc.tappidigi.AppViewModel
 import xt.qc.tappidigi.screens.profile.ProfileViewModel
 
 @Composable
-fun LoginScreen(navController: NavHostController) {
+fun LoginScreen() {
     val viewModel: LoginViewModel = viewModel { LoginViewModel() }
     val manager = koinInject<SignInWithGoogleManager>()
     val profile = koinInject<ProfileViewModel>()
@@ -29,7 +29,7 @@ fun LoginScreen(navController: NavHostController) {
     Text("Login")
     Button(onClick = {
         viewModel.loginWithGoogle(manager, onSuccess = {
-            appViewModel.checkAuthentication(navController, manager, profile)
+            appViewModel.checkAuthentication(profile)
         })
     }) {
         Text("Login with gg")

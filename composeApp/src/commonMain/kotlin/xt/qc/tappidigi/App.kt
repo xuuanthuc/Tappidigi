@@ -19,6 +19,7 @@ import org.koin.compose.koinInject
 import xt.qc.tappidigi.screens.authentication.LoginScreen
 import xt.qc.tappidigi.screens.authentication.SignInWithGoogleManager
 import xt.qc.tappidigi.screens.main.MainScreen
+import xt.qc.tappidigi.screens.profile.EditProfileScreen
 import xt.qc.tappidigi.screens.profile.ProfileViewModel
 import xt.qc.tappidigi.screens.splash.SplashScreen
 import xt.qc.tappidigi.utils.ScreenNavigation
@@ -27,17 +28,15 @@ import xt.qc.tappidigi.utils.ScreenNavigation
 fun App() {
     MaterialTheme {
         KoinContext {
-            val navController: NavHostController = rememberNavController()
             val viewModel: AppViewModel = koinInject<AppViewModel>()
-            val profileViewModel: ProfileViewModel = koinInject<ProfileViewModel>()
-            val manager = koinInject<SignInWithGoogleManager>()
+            val navController: NavHostController = rememberNavController()
 
-            LaunchedEffect(Unit) {
-                CoroutineScope(Dispatchers.Main).launch {
-                    delay(500)
-                    viewModel.checkAuthentication(navController, manager, profileViewModel)
-                }
+            LaunchedEffect(
+                Unit
+            ) {
+                viewModel.navHostController = navController
             }
+
             NavHost(
                 navController = navController,
                 startDestination = ScreenNavigation.SPLASH.name,
@@ -47,10 +46,13 @@ fun App() {
                     SplashScreen()
                 }
                 composable(route = ScreenNavigation.LOGIN.name) {
-                    LoginScreen(navController)
+                    LoginScreen()
                 }
                 composable(route = ScreenNavigation.MAIN.name) {
                     MainScreen()
+                }
+                composable(route = ScreenNavigation.EDIT_PROFILE.name) {
+                    EditProfileScreen()
                 }
             }
         }

@@ -2,6 +2,7 @@ package xt.qc.tappidigi.di
 
 import android.content.Context
 import androidx.credentials.CredentialManager
+import androidx.navigation.NavHostController
 import dev.gitlive.firebase.auth.GoogleAuthProvider
 import org.koin.android.ext.koin.androidApplication
 import org.koin.android.ext.koin.androidContext

@@ -9,4 +9,5 @@ data class User(
     val username: String? = null,
     val displayName: String? = null,
     val photoUrl: String? = null,
+    val bio: String? = null,
 )

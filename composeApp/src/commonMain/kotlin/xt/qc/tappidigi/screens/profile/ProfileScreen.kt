@@ -22,34 +22,40 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavHostController
 import coil3.compose.AsyncImage
 import org.koin.compose.koinInject
+import xt.qc.tappidigi.AppViewModel
+import xt.qc.tappidigi.utils.ScreenNavigation
 
 @Composable
 fun ProfileScreen() {
     val profile = koinInject<ProfileViewModel>()
+    val appViewModel = koinInject<AppViewModel>()
 
     Column(modifier = Modifier.padding(20.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             AsyncImage(
-                model = profile.uiState.collectAsState().value.photoUrl,
+                model = profile.uiState.collectAsState().value?.photoUrl,
                 contentDescription = null,
                 modifier = Modifier.size(80.dp).clip(CircleShape)
             )
             Spacer(modifier = Modifier.width(10.dp))
             Column(verticalArrangement = Arrangement.Center) {
                 Text(
-                    profile.uiState.value.displayName ?: "",
+                    profile.uiState.value?.displayName ?: "",
                     style = TextStyle(
                         fontWeight = FontWeight.W700,
                         fontSize = 16.sp,
                     )
                 )
-                Text(profile.uiState.value.username ?: "")
+                Text(profile.uiState.value?.username ?: "")
             }
             Spacer(modifier = Modifier.weight(1f))
             Button(
-                onClick = {},
+                onClick = {
+                    appViewModel.navHostController.navigate(ScreenNavigation.EDIT_PROFILE.name)
+                },
                 content = {
                     Icon(
                         Icons.Default.Edit,

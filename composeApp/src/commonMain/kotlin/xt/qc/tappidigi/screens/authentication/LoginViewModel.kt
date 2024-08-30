@@ -1,23 +1,27 @@
 package xt.qc.tappidigi.screens.authentication
 
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.lifecycle.ViewModel
 import dev.gitlive.firebase.Firebase
+import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.auth.GoogleAuthProvider
+import dev.gitlive.firebase.auth.auth
 import dev.gitlive.firebase.firestore.firestore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.properties.Properties
+import kotlinx.serialization.properties.encodeToMap
 import xt.qc.tappidigi.models.User
-import kotlinx.serialization.*
-import kotlinx.serialization.properties.*
 
 class LoginViewModel : ViewModel() {
+    private val auth: FirebaseAuth = Firebase.auth
+
     @OptIn(ExperimentalSerializationApi::class)
     fun loginWithGoogle(manager: SignInWithGoogleManager, onSuccess: () -> Unit) {
         CoroutineScope(Dispatchers.IO).launch {
-            val auth = manager.firebaseAuth
             val idToken = manager.getIdToken()
             val firebase = Firebase.firestore
 
@@ -36,12 +40,14 @@ class LoginViewModel : ViewModel() {
                         firebase.collection("accounts").document(it)
                             .set(Properties.encodeToMap(user), merge = true)
                     }
-
-                    onSuccess.invoke()
+                    CoroutineScope(Dispatchers.Main).launch {
+                        onSuccess.invoke()
+                    }
                 } catch (e: Exception) {
                     println("Error: ${e.message}")
                 }
             }
+            cancel()
         }
     }
 }

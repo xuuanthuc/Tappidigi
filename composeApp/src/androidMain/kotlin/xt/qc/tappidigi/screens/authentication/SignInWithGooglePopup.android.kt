@@ -30,12 +30,11 @@ actual class SignInWithGoogleManager(
             ).credential
             val googleIdTokenCredential = GoogleIdTokenCredential
                 .createFrom(result.data)
+
             return googleIdTokenCredential.idToken
         } catch (e: GetCredentialException) {
             return null
         }
     }
-
-    actual val firebaseAuth: FirebaseAuth = Firebase.auth
 }
 
