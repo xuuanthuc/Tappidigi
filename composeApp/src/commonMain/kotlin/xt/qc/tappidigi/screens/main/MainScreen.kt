@@ -103,7 +103,7 @@ fun BottomBarItem(item: BottomNavigation, onTap: () -> Unit) {
         when {
             item == BottomNavigation.PROFILE -> {
                 AsyncImage(
-                    model = profile.uiState.collectAsState().value?.photoUrl,
+                    model = profile.userState.collectAsState().value?.photoUrl,
                     contentDescription = null,
                     modifier = Modifier.size(40.dp).clip(CircleShape).clickable {
                         onTap.invoke()

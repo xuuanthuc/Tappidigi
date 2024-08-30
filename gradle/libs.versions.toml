@@ -27,6 +27,7 @@ navigationCompose = "2.7.0-alpha07"
 google-services = "4.4.2"
 serialization = "2.0.20"
 ktor = "2.3.12"
+uuid = "0.8.4"
 
 [libraries]
 #noinspection CredentialDependency
@@ -63,6 +64,7 @@ google-id = { group = "com.google.android.libraries.identity.googleid", name = "
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
 ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "ktor" }
 ktor-client-darwin = { module = "io.ktor:ktor-client-darwin", version.ref = "ktor" }
+uuid = { module = "com.benasher44:uuid", version.ref = "uuid" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

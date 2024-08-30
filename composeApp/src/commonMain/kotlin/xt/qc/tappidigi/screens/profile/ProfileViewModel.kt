@@ -12,27 +12,30 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.properties.Properties
 import kotlinx.serialization.properties.encodeToMap
-import xt.qc.tappidigi.AppViewModel
+import xt.qc.tappidigi.models.Post
 import xt.qc.tappidigi.models.User
-import xt.qc.tappidigi.screens.authentication.SignInWithGoogleManager
 
 class ProfileViewModel : ViewModel() {
-    private val _uiState = MutableStateFlow<User?>(null)
-    val uiState: StateFlow<User?> = _uiState.asStateFlow()
+    private val _userState = MutableStateFlow<User?>(null)
+    val userState: StateFlow<User?> = _userState.asStateFlow()
+
+    private val _listPostState = MutableStateFlow<List<Post>>(listOf())
+    val listPostState: StateFlow<List<Post>> = _listPostState.asStateFlow()
 
     fun setProfile(user: User) {
-        _uiState.value = user
+        _userState.value = user
     }
 
     @OptIn(ExperimentalSerializationApi::class)
     fun updateProfile(bio: String) {
         val firebase = Firebase.firestore
-        if(_uiState.value == null) return
-        val user = _uiState.value?.copy(bio = bio)
+        if (_userState.value == null) return
+        val user = _userState.value?.copy(bio = bio)
         if (bio.isNotEmpty() && user != null && user.uid != null) {
             CoroutineScope(Dispatchers.IO).launch {
                 firebase.collection("accounts").document(user.uid)
@@ -44,15 +47,39 @@ class ProfileViewModel : ViewModel() {
 
     fun logout(
         onSuccess: () -> Unit,
-    ){
+    ) {
         val firebaseAuth: FirebaseAuth = Firebase.auth
         CoroutineScope(Dispatchers.Main).launch {
             firebaseAuth.signOut()
             println(firebaseAuth.currentUser)
-            if(firebaseAuth.currentUser == null){
-                _uiState.value = null
+            if (firebaseAuth.currentUser == null) {
+                _userState.value = null
                 onSuccess.invoke()
             }
+            cancel()
+        }
+    }
+
+    fun getListPost() {
+        val firebase = Firebase.firestore
+        val user = _userState.value ?: return
+        val userPostId = mutableListOf<String>()
+        CoroutineScope(Dispatchers.IO).launch {
+            val postIds = firebase.collection("accounts").document(user.uid!!)
+                .collection("posts").get().documents
+            postIds.forEach {
+                userPostId.add(it.id)
+            }
+            firebase.collection("posts")
+                .where {
+                    "id" inArray userPostId
+                }
+                .get().documents.forEach {
+                    val post = it.data(Post.serializer())
+                    _listPostState.update { posts ->
+                        posts + post
+                    }
+                }
             cancel()
         }
     }
