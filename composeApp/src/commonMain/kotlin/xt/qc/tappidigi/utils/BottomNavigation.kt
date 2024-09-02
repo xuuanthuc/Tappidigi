@@ -8,7 +8,7 @@ import tappidigi.composeapp.generated.resources.*
 
 enum class BottomNavigation(val title: StringResource, val icon: ImageVector) {
     HOME(Res.string.home, Icons.Filled.Home),
-    COMMUNITIES(Res.string.communities, Icons.Filled.Search),
+    SEARCH(Res.string.search, Icons.Filled.Search),
     CREATE(Res.string.create, Icons.Filled.Add),
     MESSAGE(Res.string.messages, Icons.Filled.Email),
 //    NOTIFICATION(Res.string.notification, Icons.Filled.Notifications),

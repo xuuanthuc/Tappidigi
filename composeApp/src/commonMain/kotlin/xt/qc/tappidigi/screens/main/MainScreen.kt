@@ -33,13 +33,12 @@ import xt.qc.tappidigi.screens.create.CreateScreen
 import xt.qc.tappidigi.screens.home.HomeScreen
 import xt.qc.tappidigi.screens.profile.ProfileScreen
 import xt.qc.tappidigi.screens.profile.ProfileViewModel
+import xt.qc.tappidigi.screens.search.SearchScreen
 import xt.qc.tappidigi.utils.BottomNavigation
 
 @Composable
 fun MainScreen() {
     val navController: NavHostController = rememberNavController()
-    val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentDestination = navBackStackEntry?.destination
 
     Scaffold(
         bottomBar = {
@@ -61,7 +60,7 @@ fun MainScreen() {
                             // reselecting the same item
                             launchSingleTop = true
                             // Restore state when reselecting a previously selected item
-                            restoreState = false
+                            restoreState = true
                         }
                     }
                 }
@@ -76,8 +75,8 @@ fun MainScreen() {
                 composable(route = BottomNavigation.HOME.name) {
                     HomeScreen()
                 }
-                composable(route = BottomNavigation.COMMUNITIES.name) {
-                    CommunitiesScreen()
+                composable(route = BottomNavigation.SEARCH.name) {
+                    SearchScreen()
                 }
                 composable(route = BottomNavigation.CREATE.name) {
                     CreateScreen()
