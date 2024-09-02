@@ -13,6 +13,7 @@ import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
 import xt.qc.tappidigi.AppViewModel
+import xt.qc.tappidigi.MainApplication
 import xt.qc.tappidigi.screens.authentication.SignInWithGoogleManager
 import xt.qc.tappidigi.utils.Platform
 import xt.qc.tappidigi.screens.profile.ProfileViewModel
@@ -23,7 +24,7 @@ actual class AppModule(private val context: Context) {
         singleOf(::Platform)
         singleOf(::AppViewModel)
         singleOf(::ProfileViewModel)
-        single { CredentialManager.create(context) }
+        single { CredentialManager.create((context.applicationContext as MainApplication).getCurrentActivity()!!) }
         single { SignInWithGoogleManager(context, get())  }
     }
 

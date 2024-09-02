@@ -70,16 +70,18 @@ class ProfileViewModel : ViewModel() {
             postIds.forEach {
                 userPostId.add(it.id)
             }
-            firebase.collection("posts")
-                .where {
-                    "id" inArray userPostId
-                }
-                .get().documents.forEach {
-                    val post = it.data(Post.serializer())
-                    _listPostState.update { posts ->
-                        posts + post
+            if(userPostId.isNotEmpty()){
+                firebase.collection("posts")
+                    .where {
+                        "id" inArray userPostId
                     }
-                }
+                    .get().documents.forEach {
+                        val post = it.data(Post.serializer())
+                        _listPostState.update { posts ->
+                            posts + post
+                        }
+                    }
+            }
             cancel()
         }
     }
