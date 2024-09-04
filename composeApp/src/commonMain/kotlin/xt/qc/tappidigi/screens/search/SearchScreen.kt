@@ -1,5 +1,6 @@
 package xt.qc.tappidigi.screens.search
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -32,8 +33,11 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
 import tappidigi.composeapp.generated.resources.Res
 import tappidigi.composeapp.generated.resources.search
+import xt.qc.tappidigi.AppViewModel
+import xt.qc.tappidigi.models.User
 
 @Composable
 fun SearchScreen() {
@@ -43,6 +47,7 @@ fun SearchScreen() {
         )
     }
     val viewModel: SeachViewModel = viewModel { SeachViewModel() }
+    val appViewModel: AppViewModel = koinInject<AppViewModel>()
     val users = viewModel.searchedUsers.collectAsState().value
 
     Column {
@@ -63,7 +68,9 @@ fun SearchScreen() {
         })
         LazyColumn {
             items(users.size) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.clickable{
+                    appViewModel.navHostController.navigate(users[it])
+                }) {
                     AsyncImage(
                         model = users[it].photoUrl,
                         contentDescription = null,

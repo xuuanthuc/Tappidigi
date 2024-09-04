@@ -14,7 +14,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -23,12 +22,10 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import coil3.compose.AsyncImage
 import org.koin.compose.koinInject
-import xt.qc.tappidigi.screens.chat.ChatScreen
-import xt.qc.tappidigi.screens.communities.CommunitiesScreen
+import xt.qc.tappidigi.screens.chat.MessagesScreen
 import xt.qc.tappidigi.screens.create.CreateScreen
 import xt.qc.tappidigi.screens.home.HomeScreen
 import xt.qc.tappidigi.screens.profile.ProfileScreen
@@ -82,7 +79,7 @@ fun MainScreen() {
                     CreateScreen()
                 }
                 composable(route = BottomNavigation.MESSAGE.name) {
-                    ChatScreen()
+                    MessagesScreen()
                 }
 //                composable(route = BottomNavigation.NOTIFICATION.name) {
 //                    NotificationScreen()

@@ -9,20 +9,20 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import androidx.navigation.toRoute
 import org.koin.compose.KoinContext
 import org.koin.compose.koinInject
+import xt.qc.tappidigi.models.Chat
+import xt.qc.tappidigi.models.User
 import xt.qc.tappidigi.screens.authentication.LoginScreen
-import xt.qc.tappidigi.screens.authentication.SignInWithGoogleManager
+import xt.qc.tappidigi.screens.chat.ChatScreen
 import xt.qc.tappidigi.screens.main.MainScreen
 import xt.qc.tappidigi.screens.profile.EditProfileScreen
-import xt.qc.tappidigi.screens.profile.ProfileViewModel
+import xt.qc.tappidigi.screens.profile.PreviewUserProfile
 import xt.qc.tappidigi.screens.splash.SplashScreen
+import xt.qc.tappidigi.utils.CustomNavType
 import xt.qc.tappidigi.utils.ScreenNavigation
+import kotlin.reflect.typeOf
 
 @Composable
 fun App() {
@@ -53,6 +53,19 @@ fun App() {
                 }
                 composable(route = ScreenNavigation.EDIT_PROFILE.name) {
                     EditProfileScreen()
+                }
+
+                composable<User> {
+                    val user: User = it.toRoute()
+                    PreviewUserProfile(user)
+                }
+                composable<Chat> (
+                    typeMap = mapOf(
+                        typeOf<List<User>>() to CustomNavType.UserListType
+                    )
+                ){
+                    val chat: Chat = it.toRoute()
+                    ChatScreen(chat)
                 }
             }
         }
