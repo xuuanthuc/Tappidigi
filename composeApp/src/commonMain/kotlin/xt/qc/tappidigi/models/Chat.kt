@@ -1,12 +1,23 @@
 package xt.qc.tappidigi.models
 
-import androidx.core.bundle.Bundle
-import androidx.navigation.NavType
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
+
+sealed class Chat {
+    @Serializable
+    data class PrivateChat(
+        var receiver: User = User(),
+        var sender: User = User()
+    ) : Chat()
+
+    @Serializable
+    data class GroupChat(
+        var users: List<User> = emptyList()
+    ) : Chat()
+}
+
 
 @Serializable
-data class Chat(
-    var users: List<User> = emptyList()
+data class AccountRoom(
+    val chatWithUid: String? = null,
+    val roomId: String,
 )

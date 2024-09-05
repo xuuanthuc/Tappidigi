@@ -6,6 +6,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -21,18 +22,29 @@ import xt.qc.tappidigi.models.Chat
 import xt.qc.tappidigi.screens.profile.ProfileViewModel
 
 @Composable
-fun ChatScreen(chat: Chat) {
+fun ChatScreen(group: Chat.GroupChat? = null, private: Chat.PrivateChat? = null) {
     val profile = koinInject<ProfileViewModel>()
-    val chatViewModel: ChatViewModel = viewModel { ChatViewModel(chat.users, profile.userState.value!!) }
+    val chatViewModel: ChatViewModel = viewModel {
+        ChatViewModel(
+            groupUsers = group?.users, sender = private?.sender, receiver = private?.receiver
+        )
+    }
     val appViewModel: AppViewModel = koinInject<AppViewModel>()
     val contentController: MutableState<TextFieldValue> = remember {
         mutableStateOf(
             TextFieldValue()
         )
     }
+
+    LaunchedEffect(Unit) {
+        if(private != null) {
+            chatViewModel.checkChatRoomExists(private)
+        }
+    }
+
     Column {
-        Text(chat.users[0].displayName ?: "")
-        Text(chat.users[1].displayName ?: "")
+        Text(private?.sender?.displayName ?: "")
+        Text(private?.receiver?.displayName ?: "")
         Row {
             TextField(
                 value = contentController.value,

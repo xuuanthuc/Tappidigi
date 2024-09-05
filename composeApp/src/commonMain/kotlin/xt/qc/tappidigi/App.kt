@@ -59,13 +59,21 @@ fun App() {
                     val user: User = it.toRoute()
                     PreviewUserProfile(user)
                 }
-                composable<Chat> (
+                composable<Chat.GroupChat> (
                     typeMap = mapOf(
                         typeOf<List<User>>() to CustomNavType.UserListType
                     )
                 ){
-                    val chat: Chat = it.toRoute()
-                    ChatScreen(chat)
+                    val chat: Chat.GroupChat = it.toRoute()
+                    ChatScreen(group = chat)
+                }
+                composable<Chat.PrivateChat> (
+                    typeMap = mapOf(
+                        typeOf<User>() to CustomNavType.UserType
+                    )
+                ){
+                    val chat: Chat.PrivateChat = it.toRoute()
+                    ChatScreen(private = chat)
                 }
             }
         }

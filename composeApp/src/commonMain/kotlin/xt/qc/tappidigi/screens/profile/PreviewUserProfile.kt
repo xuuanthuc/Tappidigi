@@ -54,7 +54,7 @@ fun PreviewUserProfile(user: User) {
             Button(onClick = {
                 val currentUser = profile.userState.value
                 if(currentUser == null || currentUser.uid == user.uid) return@Button
-                val chat = Chat(users = listOf(user, currentUser))
+                val chat = Chat.PrivateChat(sender = currentUser, receiver = user)
                 appViewModel.navHostController.navigate(chat)
             }, content = {
                 Icon(
