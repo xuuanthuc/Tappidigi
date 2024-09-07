@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import com.benasher44.uuid.uuid4
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.firestore.ChangeType
+import dev.gitlive.firebase.firestore.Direction
 import dev.gitlive.firebase.firestore.DocumentChange
 import dev.gitlive.firebase.firestore.firestore
 import kotlinx.coroutines.CoroutineScope
@@ -69,7 +70,7 @@ class ChatViewModel(groupUsers: List<User>?, sender: User?, receiver: User?) : V
 
     private suspend fun getMessages(roomId: String) {
         val snapshot =
-            firebase.collection("chats").document(roomId).collection("messages").orderBy("createdAt").snapshots
+            firebase.collection("chats").document(roomId).collection("messages").orderBy("createdAt", direction = Direction.DESCENDING).snapshots
         println("Collected")
         snapshot.collect {
             for (dc in it.documentChanges) {
