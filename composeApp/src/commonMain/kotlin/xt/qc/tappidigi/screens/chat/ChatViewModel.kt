@@ -70,15 +70,14 @@ class ChatViewModel(groupUsers: List<User>?, sender: User?, receiver: User?) : V
 
     private suspend fun getMessages(roomId: String) {
         val snapshot =
-            firebase.collection("chats").document(roomId).collection("messages").orderBy("createdAt", direction = Direction.DESCENDING).snapshots
+            firebase.collection("chats").document(roomId).collection("messages").orderBy("createdAt").snapshots
         println("Collected")
         snapshot.collect {
             for (dc in it.documentChanges) {
                 when (dc.type) {
                     ChangeType.ADDED -> {
                         println("ADDED")
-
-                        _messages.value += dc.document.data(Message.serializer())
+                        _messages.value = listOf(dc.document.data(Message.serializer())) + _messages.value
                     }
 
                     ChangeType.MODIFIED -> {

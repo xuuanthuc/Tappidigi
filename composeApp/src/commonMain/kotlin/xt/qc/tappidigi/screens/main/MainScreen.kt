@@ -4,14 +4,19 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
@@ -103,33 +108,37 @@ fun MainScreen() {
 @Composable
 fun BottomBarItem(item: BottomNavigation, onTap: () -> Unit) {
     val profile = koinInject<ProfileViewModel>()
-    Box(modifier = Modifier.size(40.dp)) {
-        when {
-            item == BottomNavigation.PROFILE -> {
-                AsyncImage(
-                    model = profile.userState.collectAsState().value?.photoUrl,
-                    contentDescription = null,
-                    modifier = Modifier.size(40.dp).clip(CircleShape).clickable {
-                        onTap.invoke()
-                    },
-                )
-            }
+    Column {
+        Box(modifier = Modifier.size(40.dp)) {
 
-            else -> {
-                Button(
-                    onClick = {
-                        onTap.invoke()
-                    },
-                    modifier = Modifier.size(40.dp),
-                    content = {
-                        Icon(
-                            item.icon,
-                            contentDescription = null,
-                        )
-                    },
-                    contentPadding = PaddingValues(0.dp),
-                )
+            when {
+                item == BottomNavigation.PROFILE -> {
+                    AsyncImage(
+                        model = profile.userState.collectAsState().value?.photoUrl,
+                        contentDescription = null,
+                        modifier = Modifier.size(40.dp).clip(CircleShape).clickable {
+                            onTap.invoke()
+                        },
+                    )
+                }
+
+                else -> {
+                    Button(
+                        onClick = {
+                            onTap.invoke()
+                        },
+                        modifier = Modifier.size(40.dp),
+                        content = {
+                            Icon(
+                                item.icon,
+                                contentDescription = null,
+                            )
+                        },
+                        contentPadding = PaddingValues(0.dp),
+                    )
+                }
             }
         }
+        Spacer(modifier = Modifier.windowInsetsBottomHeight(WindowInsets.systemBars))
     }
 }

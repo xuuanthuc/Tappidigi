@@ -67,11 +67,12 @@ fun ChatScreen(group: Chat.GroupChat? = null, private: Chat.PrivateChat? = null)
         ) {
             items(messages.size) {
                 val msg = messages[it]
-                MessageComponent(msg)
+                MessageComponent(msg, group, private)
             }
         }
         Row {
             TextField(
+                modifier = Modifier.weight(1f),
                 value = contentController.value,
                 onValueChange = { contentController.value = it },
                 label = { Text(stringResource(Res.string.search)) },
