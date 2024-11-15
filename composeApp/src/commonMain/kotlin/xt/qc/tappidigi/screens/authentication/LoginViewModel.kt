@@ -29,16 +29,21 @@ class LoginViewModel : ViewModel() {
                 try {
                     val firebaseCredential = GoogleAuthProvider.credential(idToken, null)
                     auth.signInWithCredential(firebaseCredential)
-                    val user = User(
-                        auth.currentUser?.uid,
-                        auth.currentUser?.email,
-                        auth.currentUser?.email?.replace("@gmail.com", ""),
-                        auth.currentUser?.displayName,
-                        auth.currentUser?.photoURL,
-                    )
+
                     auth.currentUser?.uid?.let {
-                        firebase.collection("accounts").document(it)
-                            .set(Properties.encodeToMap(user), merge = true)
+                        try {
+                            val user = User(
+                                auth.currentUser?.uid,
+                                auth.currentUser?.email,
+                                auth.currentUser?.email?.replace("@gmail.com", ""),
+                                auth.currentUser?.displayName,
+                                auth.currentUser?.photoURL,
+                            )
+                            firebase.collection("accounts").document(it)
+                                .set(Properties.encodeToMap(user), merge = true)
+                        } catch (e: Exception) {
+                            auth.signOut()
+                        }
                     }
                     CoroutineScope(Dispatchers.Main).launch {
                         onSuccess.invoke()

@@ -1,11 +1,11 @@
 package xt.qc.tappidigi.screens.chat
 
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.ViewModel
 import com.benasher44.uuid.uuid4
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.firestore.ChangeType
-import dev.gitlive.firebase.firestore.Direction
-import dev.gitlive.firebase.firestore.DocumentChange
 import dev.gitlive.firebase.firestore.firestore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -29,7 +29,7 @@ class ChatViewModel(groupUsers: List<User>?, sender: User?, receiver: User?) : V
     private val _groupUsers = MutableStateFlow<List<User>>(listOf())
     private val groupUsers: StateFlow<List<User>> = _groupUsers.asStateFlow()
 
-    private val _messages = MutableStateFlow<List<Message>>(listOf())
+    private val _messages = MutableStateFlow<SnapshotStateList<Message>>(mutableStateListOf())
     val message: StateFlow<List<Message>> = _messages.asStateFlow()
 
     private val _roomId = MutableStateFlow<String?>(null)
@@ -77,7 +77,7 @@ class ChatViewModel(groupUsers: List<User>?, sender: User?, receiver: User?) : V
                 when (dc.type) {
                     ChangeType.ADDED -> {
                         println("ADDED")
-                        _messages.value = listOf(dc.document.data(Message.serializer())) + _messages.value
+                        _messages.value.add(0, dc.document.data(Message.serializer()))
                     }
 
                     ChangeType.MODIFIED -> {
@@ -101,7 +101,7 @@ class ChatViewModel(groupUsers: List<User>?, sender: User?, receiver: User?) : V
     }
 
     @OptIn(ExperimentalSerializationApi::class)
-    suspend fun createPrivateChatRoom(private: Chat.PrivateChat) {
+    fun createPrivateChatRoom(private: Chat.PrivateChat) {
         val chatRoomId = uuid4().toString()
         _roomId.value = chatRoomId
         CoroutineScope(Dispatchers.IO).launch {

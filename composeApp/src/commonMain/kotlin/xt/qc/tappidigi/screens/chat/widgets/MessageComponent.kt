@@ -31,6 +31,7 @@ fun MessageComponent(
     val msgOwer = msgOwner(message, group, private)
     val isMe = profile.userState.value?.uid == msgOwer?.uid
     println(isMe)
+    println(message)
     Row(
         modifier = Modifier.padding(
             end = if (isMe) 20.dp else 80.dp,

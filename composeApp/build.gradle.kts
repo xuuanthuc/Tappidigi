@@ -43,6 +43,7 @@ kotlin {
             implementation (libs.google.id)
             implementation(libs.ktor.client.okhttp)
             implementation(libs.ktor.client.android)
+            implementation(libs.kotlinx.coroutines.android)
         }
         commonMain.dependencies {
             implementation(compose.runtime)
@@ -65,6 +66,7 @@ kotlin {
             implementation(libs.coil.compose)
             implementation(libs.ktor.client.core)
             implementation(libs.coil.network.ktor3)
+            implementation(libs.kotlinx.coroutines.core)
         }
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)
