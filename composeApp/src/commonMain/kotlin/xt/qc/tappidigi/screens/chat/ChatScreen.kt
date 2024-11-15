@@ -35,6 +35,7 @@ import tappidigi.composeapp.generated.resources.search
 import xt.qc.tappidigi.AppViewModel
 import xt.qc.tappidigi.models.Chat
 import xt.qc.tappidigi.screens.chat.widgets.MessageComponent
+import xt.qc.tappidigi.screens.chat.widgets.MessagePosition
 import xt.qc.tappidigi.screens.profile.ProfileViewModel
 
 @Composable
@@ -61,13 +62,27 @@ fun ChatScreen(group: Chat.GroupChat? = null, private: Chat.PrivateChat? = null)
         Text(private?.sender?.displayName ?: "")
         Text(private?.receiver?.displayName ?: "")
         LazyColumn(
-            modifier = Modifier.weight(1f).fillMaxWidth().background(Color.Blue),
+            modifier = Modifier.weight(1f).fillMaxWidth(),
             verticalArrangement = Arrangement.Bottom,
             reverseLayout = true
         ) {
             items(messages.size) {
                 val msg = messages[it]
-                MessageComponent(msg, group, private)
+                var position = MessagePosition.MIDDLE
+                val prevMsg = messages.getOrNull(it - 1)
+                val nextMsg = messages.getOrNull(it + 1)
+
+                if (prevMsg == null) {
+                    position = MessagePosition.FIRST
+                } else if (nextMsg == null) {
+                    position = MessagePosition.LAST
+                } else if (msg.ownerId != prevMsg.ownerId) {
+                    position = MessagePosition.FIRST
+                } else if (nextMsg.ownerId != msg.ownerId) {
+                    position = MessagePosition.LAST
+                }
+
+                MessageComponent(msg, group, private, position)
             }
         }
         Row {
