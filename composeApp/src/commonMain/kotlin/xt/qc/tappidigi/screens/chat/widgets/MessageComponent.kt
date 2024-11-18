@@ -5,6 +5,7 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -27,7 +28,7 @@ import xt.qc.tappidigi.models.User
 import xt.qc.tappidigi.screens.profile.ProfileViewModel
 
 enum class MessagePosition {
-    FIRST, LAST, MIDDLE
+    FIRST, LAST, MIDDLE, SINGLE
 }
 
 @Composable
@@ -38,23 +39,24 @@ fun MessageComponent(
     position: MessagePosition,
 ) {
     val profile = koinInject<ProfileViewModel>()
-    val msgOwer = msgOwner(message, group, private)
-    val isMe = profile.userState.value?.uid == msgOwer?.uid
+    val owner = msgOwner(message, group, private)
+    val isMe = profile.userState.value?.uid == owner?.uid
 
     fun <T> gap(first: T, second: T): T {
         return if (isMe) first else second
     }
 
-    println(position)
-
     Row(
         modifier = Modifier.padding(
             end = gap(0.dp, 80.dp), start = gap(80.dp, 0.dp)
-        ).fillMaxWidth(), horizontalArrangement = gap(Arrangement.End, Arrangement.Start)
+        ).fillMaxWidth(),
+        horizontalArrangement = gap(Arrangement.End, Arrangement.Start),
+        verticalAlignment = Alignment.Bottom,
     ) {
-        if (!isMe && msgOwer != null) {
-            msgAvatar(msgOwer)
-        }
+        msgAvatar(
+            owner,
+            isShow = !isMe && owner != null && (position == MessagePosition.SINGLE || position == MessagePosition.LAST)
+        )
         Box(
             Modifier.weight(1f).padding(vertical = 2.dp, horizontal = 6.dp),
             contentAlignment = gap(Alignment.CenterEnd, Alignment.CenterStart)
@@ -70,18 +72,31 @@ fun MessageComponent(
                     })
                 }.background(
                     gap(Color.Blue, Color.LightGray), shape = RoundedCornerShape(
-                        topStart = 15.dp,
-                        topEnd = when (position) {
+                        topStart = gap(
+                            15.dp, when (position) {
+                                MessagePosition.FIRST -> 15.dp
+                                MessagePosition.LAST -> 4.dp
+                                MessagePosition.MIDDLE -> 4.dp
+                                MessagePosition.SINGLE -> 15.dp
+                            }
+                        ), topEnd = when (position) {
                             MessagePosition.FIRST -> 15.dp
-                            MessagePosition.LAST -> 0.dp
-                            MessagePosition.MIDDLE -> 0.dp
-                        },
-                        bottomStart = gap(15.dp, 8.dp),
-                        bottomEnd = gap(
-                            when (position) {
-                                MessagePosition.FIRST -> 0.dp
+                            MessagePosition.LAST -> gap(4.dp, 15.dp)
+                            MessagePosition.MIDDLE -> gap(4.dp, 15.dp)
+                            MessagePosition.SINGLE -> 15.dp
+                        }, bottomStart = gap(
+                            15.dp, when (position) {
+                                MessagePosition.FIRST -> 4.dp
                                 MessagePosition.LAST -> 8.dp
-                                MessagePosition.MIDDLE -> 0.dp
+                                MessagePosition.MIDDLE -> 4.dp
+                                MessagePosition.SINGLE -> 8.dp
+                            }
+                        ), bottomEnd = gap(
+                            when (position) {
+                                MessagePosition.FIRST -> 4.dp
+                                MessagePosition.LAST -> 8.dp
+                                MessagePosition.MIDDLE -> 4.dp
+                                MessagePosition.SINGLE -> 8.dp
                             }, 15.dp
                         )
                     )
@@ -92,15 +107,19 @@ fun MessageComponent(
 }
 
 @Composable
-fun msgAvatar(user: User) {
+fun msgAvatar(user: User?, isShow: Boolean) {
     Box(
-        Modifier.padding(top = 2.dp, start = 10.dp)
+        Modifier.padding(bottom = 2.dp, start = 10.dp)
     ) {
-        AsyncImage(
-            model = user.photoUrl,
-            contentDescription = null,
-            modifier = Modifier.size(40.dp).clip(CircleShape)
-        )
+        if (isShow) {
+            AsyncImage(
+                model = user?.photoUrl,
+                contentDescription = null,
+                modifier = Modifier.size(30.dp).clip(CircleShape)
+            )
+        } else {
+            Spacer(modifier = Modifier.size(30.dp))
+        }
     }
 }
 
@@ -109,9 +128,9 @@ fun msgOwner(
 ): User? {
     if (private != null) {
         return if (private.sender.uid == message.ownerId) {
-            private.sender
-        } else if (private.receiver.uid == message.ownerId) {
             private.receiver
+        } else if (private.receiver.uid == message.ownerId) {
+            private.sender
         } else {
             null
         }

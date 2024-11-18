@@ -1,18 +1,17 @@
 package xt.qc.tappidigi.screens.chat
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.safeDrawingPadding
-import androidx.compose.foundation.layout.systemBars
-import androidx.compose.foundation.layout.windowInsetsBottomHeight
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
@@ -22,16 +21,19 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import tappidigi.composeapp.generated.resources.Res
 import tappidigi.composeapp.generated.resources.search
+import tappidigi.composeapp.generated.resources.send
 import xt.qc.tappidigi.AppViewModel
 import xt.qc.tappidigi.models.Chat
 import xt.qc.tappidigi.screens.chat.widgets.MessageComponent
@@ -68,18 +70,20 @@ fun ChatScreen(group: Chat.GroupChat? = null, private: Chat.PrivateChat? = null)
         ) {
             items(messages.size) {
                 val msg = messages[it]
-                var position = MessagePosition.MIDDLE
-                val prevMsg = messages.getOrNull(it - 1)
-                val nextMsg = messages.getOrNull(it + 1)
+                val prevMsg = messages.getOrNull(it + 1)
+                val nextMsg = messages.getOrNull(it - 1)
+                val position: MessagePosition = when {
+                    prevMsg == null -> MessagePosition.FIRST
 
-                if (prevMsg == null) {
-                    position = MessagePosition.FIRST
-                } else if (nextMsg == null) {
-                    position = MessagePosition.LAST
-                } else if (msg.ownerId != prevMsg.ownerId) {
-                    position = MessagePosition.FIRST
-                } else if (nextMsg.ownerId != msg.ownerId) {
-                    position = MessagePosition.LAST
+                    nextMsg == null -> if (msg.ownerId != prevMsg.ownerId) MessagePosition.SINGLE else MessagePosition.LAST
+
+                    msg.ownerId != prevMsg.ownerId && msg.ownerId != nextMsg.ownerId -> MessagePosition.SINGLE
+
+                    msg.ownerId != prevMsg.ownerId -> MessagePosition.FIRST
+
+                    msg.ownerId != nextMsg.ownerId -> MessagePosition.LAST
+
+                    else -> MessagePosition.MIDDLE
                 }
 
                 MessageComponent(msg, group, private, position)
@@ -92,14 +96,17 @@ fun ChatScreen(group: Chat.GroupChat? = null, private: Chat.PrivateChat? = null)
                 onValueChange = { contentController.value = it },
                 label = { Text(stringResource(Res.string.search)) },
             )
-            Button(onClick = {
-                CoroutineScope(Dispatchers.Main).launch {
-                    chatViewModel.sendMessage(
-                        contentController.value.text, private?.sender?.uid ?: ""
-                    )
-                }
-            }) {
-                Text("Send")
+            Button(
+                onClick = {
+                    CoroutineScope(Dispatchers.Main).launch {
+                        chatViewModel.sendMessage(
+                            contentController.value.text, private?.sender?.uid ?: ""
+                        )
+                    }
+                }, modifier = Modifier.size(40.dp).clip(CircleShape),
+                contentPadding = PaddingValues(0.dp)
+            ) {
+                Icon(painter = painterResource(Res.drawable.send), contentDescription = "")
             }
         }
     }
