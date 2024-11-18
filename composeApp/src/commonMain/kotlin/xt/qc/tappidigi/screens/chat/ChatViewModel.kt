@@ -1,6 +1,7 @@
 package xt.qc.tappidigi.screens.chat
 
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.ViewModel
 import com.benasher44.uuid.uuid4
@@ -11,6 +12,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -21,6 +23,7 @@ import kotlinx.serialization.properties.encodeToMap
 import xt.qc.tappidigi.models.AccountRoom
 import xt.qc.tappidigi.models.Chat
 import xt.qc.tappidigi.models.Message
+import xt.qc.tappidigi.models.MessageStatus
 import xt.qc.tappidigi.models.MessageType
 import xt.qc.tappidigi.models.User
 
@@ -43,9 +46,38 @@ class ChatViewModel(groupUsers: List<User>?, sender: User?, receiver: User?) : V
     suspend fun sendMessage(content: String, uid: String) {
         if (roomId.value == null || uid.isEmpty()) return
         val message =
-            Message(content = content, ownerId = uid, messageType = MessageType.TEXT.ordinal)
-        firebase.collection("chats").document(roomId.value!!).collection("messages")
-            .document(message.id).set(Properties.encodeToMap(message))
+            Message(
+                content = content,
+                ownerId = uid,
+                messageType = MessageType.TEXT.ordinal,
+                status = mutableStateOf(MessageStatus.SENDING)
+            )
+        _messages.value.add(0, message)
+        try {
+            firebase.collection("chats").document(roomId.value!!).collection("messages")
+                .document(message.id).set(Properties.encodeToMap(message))
+        } catch (e: Exception) {
+            message.status.value = MessageStatus.ERROR
+        }
+    }
+
+
+    @OptIn(ExperimentalSerializationApi::class)
+    suspend fun reSendMessage(message: Message) {
+        message.status.value = MessageStatus.SENDING;
+        try {
+            firebase.collection("chats").document(roomId.value!!).collection("messages")
+                .document(message.id).set(Properties.encodeToMap(message))
+        } catch (e: Exception) {
+            message.status.value = MessageStatus.ERROR
+        }
+    }
+
+
+    private fun findMessage(id: String): Message? {
+        return _messages.value.firstOrNull {
+            it.id == id
+        }
     }
 
     suspend fun checkChatRoomExists(chat: Chat.PrivateChat) {
@@ -70,14 +102,22 @@ class ChatViewModel(groupUsers: List<User>?, sender: User?, receiver: User?) : V
 
     private suspend fun getMessages(roomId: String) {
         val snapshot =
-            firebase.collection("chats").document(roomId).collection("messages").orderBy("createdAt").snapshots
+            firebase.collection("chats").document(roomId).collection("messages")
+                .orderBy("createdAt").snapshots
         println("Collected")
         snapshot.collect {
             for (dc in it.documentChanges) {
                 when (dc.type) {
                     ChangeType.ADDED -> {
                         println("ADDED")
-                        _messages.value.add(0, dc.document.data(Message.serializer()))
+                        val message = dc.document.data(Message.serializer())
+                        val found = findMessage(message.id)
+                        if (found != null) {
+                            found.status.value = MessageStatus.SENT
+                        } else {
+                            message.status.value = MessageStatus.SENT
+                            _messages.value.add(0, message)
+                        }
                     }
 
                     ChangeType.MODIFIED -> {
