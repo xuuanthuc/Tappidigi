@@ -1,13 +1,11 @@
 package xt.qc.tappidigi.screens.home
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
+import xt.qc.tappidigi.utils.toUnicode
 
 @Composable
 fun HomeScreen() {
-   Text("Home")
+   var fsd = 0x1F4FA.toUnicode()
+   Text(text = fsd)
 }

@@ -4,6 +4,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -37,8 +38,10 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
 import tappidigi.composeapp.generated.resources.Res
+import tappidigi.composeapp.generated.resources.emoji
 import tappidigi.composeapp.generated.resources.send
 import xt.qc.tappidigi.screens.chat.ChatViewModel
+import xt.qc.tappidigi.utils.ColorsPalette
 
 @Composable
 fun MessageTextField(
@@ -62,7 +65,8 @@ fun MessageTextField(
         animationSpec = tween(durationMillis = animationDuration)
     )
     Row(
-        modifier = Modifier.padding(8.dp), verticalAlignment = Alignment.CenterVertically
+        modifier = Modifier.background(ColorsPalette.softFern).padding(8.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
         Box(Modifier.weight(1f).fillMaxWidth().height(40.dp)) {
             BasicTextField(
@@ -75,19 +79,48 @@ fun MessageTextField(
                     Box(
                         Modifier.fillMaxHeight().background(
                             color = Color.White, shape = RoundedCornerShape(8.dp)
-                        ).padding(horizontal = 12.dp), contentAlignment = Alignment.CenterStart
+                        ).padding(4.dp), contentAlignment = Alignment.CenterStart
                     ) {
-                        innerTextField()
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+
+                            ) {
+                            Box(
+                                modifier = Modifier.weight(1f)
+                                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                            ) {
+                                innerTextField()
+                            }
+                            Button(
+                                onClick = {
+
+                                },
+                                modifier = Modifier.size(40.dp),
+                                contentPadding = PaddingValues(0.dp),
+                                shape = RoundedCornerShape(8.dp),
+                                colors = ButtonColors(
+                                    containerColor = Color.Transparent,
+                                    contentColor = chatViewModel.theme.value.sendButtonColor,
+                                    disabledContainerColor = Color.Gray,
+                                    disabledContentColor = Color.Gray
+                                )
+                            ) {
+                                Icon(
+                                    painter = painterResource(Res.drawable.emoji),
+                                    contentDescription = ""
+                                )
+                            }
+                        }
                         if (isLabelVisible) {
                             Text(
-                                "Type a message...",
-                                style = TextStyle(
+                                "Type a message...", style = TextStyle(
                                     color = Color.Gray,
                                     fontWeight = FontWeight.W300,
-                                ),
+                                ), modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                             )
                         }
                     }
+
                 },
             )
         }
