@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -34,20 +35,16 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 import tappidigi.composeapp.generated.resources.Res
 import tappidigi.composeapp.generated.resources.send
-import xt.qc.tappidigi.models.Chat
 import xt.qc.tappidigi.screens.chat.ChatViewModel
 
 @Composable
 fun MessageTextField(
     chatViewModel: ChatViewModel,
     contentController: MutableState<TextFieldValue>,
-    private: Chat.PrivateChat?
+    onSend: (String) -> Unit,
 ) {
     var isLabelVisible by remember { mutableStateOf(true) }
 
@@ -104,15 +101,17 @@ fun MessageTextField(
                 onClick = {
                     val message = contentController.value.text
                     contentController.value = TextFieldValue("")
-                    CoroutineScope(Dispatchers.Main).launch {
-                        chatViewModel.sendMessage(
-                            message, private?.sender?.uid ?: ""
-                        )
-                    }
+                    onSend.invoke(message)
                 },
                 modifier = Modifier.size(sentMessageButtonSize.dp),
                 contentPadding = PaddingValues(0.dp),
-                shape = RoundedCornerShape(8.dp)
+                shape = RoundedCornerShape(8.dp),
+                colors = ButtonColors(
+                    containerColor = chatViewModel.theme.value.sendButtonColor,
+                    contentColor = Color.White,
+                    disabledContainerColor = Color.Gray,
+                    disabledContentColor = Color.Gray
+                )
             ) {
                 Icon(painter = painterResource(Res.drawable.send), contentDescription = "")
             }

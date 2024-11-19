@@ -1,5 +1,6 @@
 package xt.qc.tappidigi.screens.chat
 
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
@@ -26,6 +27,8 @@ import xt.qc.tappidigi.models.Message
 import xt.qc.tappidigi.models.MessageStatus
 import xt.qc.tappidigi.models.MessageType
 import xt.qc.tappidigi.models.User
+import xt.qc.tappidigi.utils.ChatThemes
+import xt.qc.tappidigi.utils.GreenPalette
 
 class ChatViewModel(groupUsers: List<User>?, sender: User?, receiver: User?) : ViewModel() {
     private val firebase = Firebase.firestore
@@ -37,6 +40,8 @@ class ChatViewModel(groupUsers: List<User>?, sender: User?, receiver: User?) : V
 
     private val _roomId = MutableStateFlow<String?>(null)
     private val roomId: StateFlow<String?> = _roomId.asStateFlow()
+
+    val theme: MutableState<ChatThemes> = mutableStateOf(GreenPalette)
 
     init {
         _groupUsers.value = groupUsers ?: listOf()

@@ -39,10 +39,12 @@ import xt.qc.tappidigi.models.MessagePosition
 import xt.qc.tappidigi.models.MessageStatus
 import xt.qc.tappidigi.models.User
 import xt.qc.tappidigi.screens.profile.ProfileViewModel
+import xt.qc.tappidigi.utils.ChatThemes
 
 @Composable
 fun MessageComponent(
     message: Message,
+    theme: ChatThemes,
     group: Chat.GroupChat? = null,
     private: Chat.PrivateChat? = null,
     position: MessagePosition,
@@ -115,7 +117,7 @@ fun MessageComponent(
                         })
                     }.background(
                         gap(
-                            Color.Blue, Color.Magenta
+                            theme.ownerColor, theme.otherColor,
                         ).copy(alpha = if (message.status.value == MessageStatus.ERROR) 0.5f else 1f),
                         shape = messageShape
                     ).padding(9.dp),
