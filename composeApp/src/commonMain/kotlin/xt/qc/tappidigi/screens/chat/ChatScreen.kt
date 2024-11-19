@@ -1,6 +1,10 @@
 package xt.qc.tappidigi.screens.chat
 
 import MessageTextField
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -20,6 +24,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -34,8 +39,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
 import kotlinx.coroutines.CoroutineScope
@@ -48,8 +55,10 @@ import tappidigi.composeapp.generated.resources.arrow_right
 import tappidigi.composeapp.generated.resources.send
 import xt.qc.tappidigi.AppViewModel
 import xt.qc.tappidigi.models.Chat
+import xt.qc.tappidigi.models.MessagePosition
+import xt.qc.tappidigi.models.MessageStatus
 import xt.qc.tappidigi.screens.chat.widgets.MessageComponent
-import xt.qc.tappidigi.screens.chat.widgets.MessagePosition
+import xt.qc.tappidigi.screens.chat.widgets.MessageStatusComponent
 import xt.qc.tappidigi.screens.profile.ProfileViewModel
 
 @Composable
@@ -149,6 +158,7 @@ fun ChatScreen(group: Chat.GroupChat? = null, private: Chat.PrivateChat? = null)
                 )
             }
         }
+        MessageStatusComponent(chatViewModel = chatViewModel)
         MessageTextField(
             chatViewModel = chatViewModel,
             contentController = contentController,

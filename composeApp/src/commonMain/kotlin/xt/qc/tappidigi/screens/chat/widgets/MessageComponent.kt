@@ -5,7 +5,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,13 +17,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -34,23 +29,16 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
 import tappidigi.composeapp.generated.resources.Res
-import tappidigi.composeapp.generated.resources.send
 import tappidigi.composeapp.generated.resources.warning
 import xt.qc.tappidigi.models.Chat
 import xt.qc.tappidigi.models.Message
+import xt.qc.tappidigi.models.MessagePosition
 import xt.qc.tappidigi.models.MessageStatus
 import xt.qc.tappidigi.models.User
-import xt.qc.tappidigi.screens.chat.ChatViewModel
 import xt.qc.tappidigi.screens.profile.ProfileViewModel
-
-enum class MessagePosition {
-    FIRST, LAST, MIDDLE, SINGLE
-}
 
 @Composable
 fun MessageComponent(
@@ -67,8 +55,6 @@ fun MessageComponent(
     fun <T> gap(first: T, second: T): T {
         return if (isMe) first else second
     }
-
-    val showSpinner = remember { mutableStateOf(false) }
 
     val messageShape = RoundedCornerShape(
         topStart = gap(
@@ -100,15 +86,6 @@ fun MessageComponent(
         )
     )
 
-    LaunchedEffect(message.status.value) {
-        if (message.status.value == MessageStatus.SENDING) {
-            delay(300)
-            showSpinner.value = true
-        } else {
-            delay(300)
-            showSpinner.value = false
-        }
-    }
     Column {
         Row(
             modifier = Modifier.padding(
@@ -130,9 +107,9 @@ fun MessageComponent(
                     style = TextStyle(
                         color = gap(Color.White, Color.Black)
                     ),
-                    modifier = Modifier.pointerInput(Unit) {
+                    modifier = Modifier.pointerInput(message) {
                         detectTapGestures(onTap = {
-                            if(message.status.value == MessageStatus.ERROR){
+                            if (message.status.value == MessageStatus.ERROR) {
                                 onResend.invoke(message)
                             }
                         })
@@ -142,15 +119,6 @@ fun MessageComponent(
                         ).copy(alpha = if (message.status.value == MessageStatus.ERROR) 0.5f else 1f),
                         shape = messageShape
                     ).padding(9.dp),
-                )
-            }
-            AnimatedVisibility(
-                visible = message.status.value == MessageStatus.SENDING && showSpinner.value,
-                enter = fadeIn(),
-                exit = fadeOut()
-            ) {
-                CircularProgressIndicator(
-                    color = Color.Blue, strokeWidth = 4.dp, modifier = Modifier.size(20.dp),
                 )
             }
             AnimatedVisibility(

@@ -31,3 +31,7 @@ enum class MessageStatus {
     ERROR,
     SENT;
 }
+
+enum class MessagePosition {
+    FIRST, LAST, MIDDLE, SINGLE
+}
