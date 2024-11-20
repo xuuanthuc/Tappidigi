@@ -4,8 +4,10 @@ import MessageTextField
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -30,6 +32,7 @@ import kotlinx.coroutines.withContext
 import org.koin.compose.koinInject
 import xt.qc.tappidigi.models.Chat
 import xt.qc.tappidigi.models.MessagePosition
+import xt.qc.tappidigi.screens.chat.widgets.ChatEmojisComponent
 import xt.qc.tappidigi.screens.chat.widgets.ChatHeadingComponent
 import xt.qc.tappidigi.screens.chat.widgets.MessageComponent
 import xt.qc.tappidigi.screens.chat.widgets.MessageStatusComponent
@@ -128,5 +131,6 @@ fun ChatScreen(group: Chat.GroupChat? = null, private: Chat.PrivateChat? = null)
                     )
                 }
             })
+        ChatEmojisComponent(chatViewModel = chatViewModel)
     }
 }

@@ -36,6 +36,9 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 import tappidigi.composeapp.generated.resources.Res
 import tappidigi.composeapp.generated.resources.emoji
@@ -93,7 +96,9 @@ fun MessageTextField(
                             }
                             Button(
                                 onClick = {
-
+                                    CoroutineScope(Dispatchers.Main).launch {
+                                        chatViewModel.getEmojiProvider()
+                                    }
                                 },
                                 modifier = Modifier.size(40.dp),
                                 contentPadding = PaddingValues(0.dp),

@@ -1,5 +1,6 @@
 package xt.qc.tappidigi.screens.chat
 
+import io.ktor.client.statement.*
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -9,20 +10,27 @@ import com.benasher44.uuid.uuid4
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.firestore.ChangeType
 import dev.gitlive.firebase.firestore.firestore
+import io.ktor.client.call.body
+import io.ktor.http.HttpMethod
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.properties.Properties
 import kotlinx.serialization.properties.encodeToMap
+import xt.qc.tappidigi.api.ApiProvider
+import xt.qc.tappidigi.api.Usecase
 import xt.qc.tappidigi.models.AccountRoom
 import xt.qc.tappidigi.models.Chat
+import xt.qc.tappidigi.models.Emoji
 import xt.qc.tappidigi.models.Message
 import xt.qc.tappidigi.models.MessageStatus
 import xt.qc.tappidigi.models.MessageType
@@ -40,6 +48,12 @@ class ChatViewModel(groupUsers: List<User>?, sender: User?, receiver: User?) : V
 
     private val _roomId = MutableStateFlow<String?>(null)
     private val roomId: StateFlow<String?> = _roomId.asStateFlow()
+
+    private val _emojis = MutableStateFlow<List<Emoji>>(emptyList())
+    val emojis: StateFlow<List<Emoji>> = _emojis.asStateFlow()
+
+    private val _groupEmojis = MutableStateFlow<Map<String, List<Emoji>>?>(null)
+    val groupEmoji: StateFlow<Map<String, List<Emoji>>?> = _groupEmojis.asStateFlow()
 
     val theme: MutableState<ChatThemes> = mutableStateOf(GreenPalette)
 
@@ -191,5 +205,11 @@ class ChatViewModel(groupUsers: List<User>?, sender: User?, receiver: User?) : V
             firebase.collection("accounts").document(it.uid).collection("chats")
                 .document(chatRoomId).set(Properties.encodeToMap(AccountRoom(roomId = chatRoomId)))
         }
+    }
+
+    suspend fun getEmojiProvider() {
+        val emojis = Usecase().getEmojis()
+        _emojis.value = emojis
+        _groupEmojis.value = emojis.groupBy { it.group }
     }
 }

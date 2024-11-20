@@ -5,6 +5,7 @@ import org.koin.core.module.Module
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
 import xt.qc.tappidigi.AppViewModel
+import xt.qc.tappidigi.api.ApiProvider
 import xt.qc.tappidigi.screens.profile.ProfileViewModel
 import xt.qc.tappidigi.utils.Platform
 
@@ -13,6 +14,7 @@ actual class AppModule {
         singleOf(::Platform)
         singleOf(::AppViewModel)
         singleOf(::ProfileViewModel)
+        singleOf(::ApiProvider)
     }
     actual fun initKoin() {
         startKoin {

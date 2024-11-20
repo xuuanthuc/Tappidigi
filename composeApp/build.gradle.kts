@@ -67,6 +67,11 @@ kotlin {
             implementation(libs.ktor.client.core)
             implementation(libs.coil.network.ktor3)
             implementation(libs.kotlinx.coroutines.core)
+            implementation(libs.ktor.client.cio)
+            implementation(libs.ktor.client.logging)
+
+
+
         }
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)

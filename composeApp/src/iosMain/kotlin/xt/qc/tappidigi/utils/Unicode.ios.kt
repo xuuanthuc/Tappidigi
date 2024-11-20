@@ -1,6 +1,7 @@
 package xt.qc.tappidigi.utils
-import Swift
+
+import platform.Foundation.NSString
 
 actual fun Int.toUnicode(): String {
-    return UnicodeScalar(this)
+    return "UnicodeScalar(this)"
 }
