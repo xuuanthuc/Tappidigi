@@ -63,12 +63,15 @@ fun ChatScreen(group: Chat.GroupChat? = null, private: Chat.PrivateChat? = null)
 
     LaunchedEffect(Unit) {
         if (private != null) {
+            launch(Dispatchers.IO) {
+                chatViewModel.getEmojiProvider()
+            }
             chatViewModel.checkChatRoomExists(private)
         }
     }
 
     LaunchedEffect(action.value) {
-        if(action.value == ActionChat.SEND) {
+        if (action.value == ActionChat.SEND) {
             lazyColumnListState.animateScrollToItem(0)
             action.value = ActionChat.WAIT
         }
@@ -121,7 +124,8 @@ fun ChatScreen(group: Chat.GroupChat? = null, private: Chat.PrivateChat? = null)
             }
         }
         MessageStatusComponent(chatViewModel = chatViewModel)
-        MessageTextField(chatViewModel = chatViewModel,
+        MessageTextField(
+            chatViewModel = chatViewModel,
             contentController = contentController,
             onSend = {
                 scope.launch {
@@ -131,6 +135,6 @@ fun ChatScreen(group: Chat.GroupChat? = null, private: Chat.PrivateChat? = null)
                     )
                 }
             })
-        ChatEmojisComponent(chatViewModel = chatViewModel)
+        ChatEmojisComponent(chatViewModel = chatViewModel, contentController = contentController)
     }
 }

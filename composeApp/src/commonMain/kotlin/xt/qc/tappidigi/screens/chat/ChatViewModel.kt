@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
@@ -38,6 +39,10 @@ import xt.qc.tappidigi.models.User
 import xt.qc.tappidigi.utils.ChatThemes
 import xt.qc.tappidigi.utils.GreenPalette
 
+enum class EmojiState {
+    SHOW, HIDE
+}
+
 class ChatViewModel(groupUsers: List<User>?, sender: User?, receiver: User?) : ViewModel() {
     private val firebase = Firebase.firestore
     private val _groupUsers = MutableStateFlow<List<User>>(listOf())
@@ -52,10 +57,15 @@ class ChatViewModel(groupUsers: List<User>?, sender: User?, receiver: User?) : V
     private val _emojis = MutableStateFlow<List<Emoji>>(emptyList())
     val emojis: StateFlow<List<Emoji>> = _emojis.asStateFlow()
 
+
     private val _groupEmojis = MutableStateFlow<Map<String, List<Emoji>>?>(null)
     val groupEmoji: StateFlow<Map<String, List<Emoji>>?> = _groupEmojis.asStateFlow()
 
     val theme: MutableState<ChatThemes> = mutableStateOf(GreenPalette)
+
+    var emojiState: MutableState<EmojiState> = mutableStateOf(EmojiState.HIDE)
+
+    var isFocused: MutableState<Boolean> = mutableStateOf(false)
 
     init {
         _groupUsers.value = groupUsers ?: listOf()
@@ -111,7 +121,6 @@ class ChatViewModel(groupUsers: List<User>?, sender: User?, receiver: User?) : V
                 _roomId.value = room.roomId
             }
         }
-
         if (isExists && roomId.value != null) {
             getMessages(roomId.value!!)
         } else {
@@ -208,8 +217,11 @@ class ChatViewModel(groupUsers: List<User>?, sender: User?, receiver: User?) : V
     }
 
     suspend fun getEmojiProvider() {
-        val emojis = Usecase().getEmojis()
-        _emojis.value = emojis
-        _groupEmojis.value = emojis.groupBy { it.group }
+        if (_emojis.value.isEmpty()) {
+            val emojis = Usecase().getEmojis()
+            _emojis.value = emojis
+            _groupEmojis.value = emojis.groupBy { it.group }
+            println(_emojis.value.size)
+        }
     }
 }
