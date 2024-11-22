@@ -1,5 +1,6 @@
 package xt.qc.tappidigi.di
 
+import android.app.Activity
 import android.content.Context
 import androidx.credentials.CredentialManager
 import org.koin.android.ext.koin.androidContext
@@ -18,12 +19,12 @@ import xt.qc.tappidigi.utils.Platform
 
 actual class AppModule(private val context: Context) {
     actual val appModule: Module = module {
-        singleOf(::Platform)
         singleOf(::AppViewModel)
         singleOf(::ProfileViewModel)
         singleOf(::ApiProvider)
         single { CredentialManager.create((context.applicationContext as MainApplication).getCurrentActivity()!!) }
         single { SignInWithGoogleManager(context, get())  }
+        single { Platform(context, (context.applicationContext as MainApplication).getCurrentActivity()!!) }
     }
 
     actual fun initKoin() {

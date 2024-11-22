@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.Button
@@ -38,6 +39,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusModifier
 import androidx.compose.ui.focus.focusRequester
@@ -49,18 +51,24 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
+import coil3.compose.AsyncImage
+import coil3.request.ImageRequest
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
+import org.koin.compose.koinInject
 import tappidigi.composeapp.generated.resources.Res
 import tappidigi.composeapp.generated.resources.emoji
 import tappidigi.composeapp.generated.resources.keyboard
 import tappidigi.composeapp.generated.resources.send
+import xt.qc.tappidigi.screens.authentication.SignInWithGoogleManager
+import xt.qc.tappidigi.screens.chat.AlbumState
 import xt.qc.tappidigi.screens.chat.ChatViewModel
 import xt.qc.tappidigi.screens.chat.EmojiState
 import xt.qc.tappidigi.utils.ColorsPalette
+import xt.qc.tappidigi.utils.Platform
 
 @Composable
 fun MessageTextField(
@@ -98,6 +106,31 @@ fun MessageTextField(
         modifier = Modifier.background(ColorsPalette.softFern).padding(8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        Button(
+            onClick = {
+                when(chatViewModel.albumState.value) {
+                    AlbumState.SHOW -> {
+                        chatViewModel.albumState.value = AlbumState.HIDE
+                    }
+                    AlbumState.HIDE -> {
+                        chatViewModel.albumState.value = AlbumState.SHOW
+                    }
+                }
+            },
+            modifier = Modifier.size(40.dp),
+            contentPadding = PaddingValues(0.dp),
+            shape = RoundedCornerShape(8.dp),
+            colors = ButtonColors(
+                containerColor = Color.Transparent,
+                contentColor = chatViewModel.theme.value.sendButtonColor,
+                disabledContainerColor = Color.Gray,
+                disabledContentColor = Color.Gray
+            )
+        ) {
+            Icon(
+                painter = painterResource(Res.drawable.emoji), contentDescription = ""
+            )
+        }
         Box(Modifier.weight(1f).fillMaxWidth().height(40.dp)) {
             BasicTextField(
                 value = contentController.value,
@@ -160,8 +193,7 @@ fun MessageTextField(
                                                 Res.drawable.emoji
                                             }
                                         }
-                                    ),
-                                    contentDescription = ""
+                                    ), contentDescription = ""
                                 )
                             }
                         }

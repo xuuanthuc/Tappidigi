@@ -1,6 +1,5 @@
 package xt.qc.tappidigi.screens.chat
 
-import io.ktor.client.statement.*
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -10,25 +9,17 @@ import com.benasher44.uuid.uuid4
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.firestore.ChangeType
 import dev.gitlive.firebase.firestore.firestore
-import io.ktor.client.call.body
-import io.ktor.http.HttpMethod
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.properties.Properties
 import kotlinx.serialization.properties.encodeToMap
-import xt.qc.tappidigi.api.ApiProvider
 import xt.qc.tappidigi.api.Usecase
 import xt.qc.tappidigi.models.AccountRoom
 import xt.qc.tappidigi.models.Chat
@@ -42,6 +33,10 @@ import xt.qc.tappidigi.utils.GreenPalette
 import xt.qc.tappidigi.utils.Status
 
 enum class EmojiState {
+    SHOW, HIDE
+}
+
+enum class AlbumState {
     SHOW, HIDE
 }
 
@@ -66,6 +61,8 @@ class ChatViewModel(groupUsers: List<User>?, sender: User?, receiver: User?) : V
     val theme: MutableState<ChatThemes> = mutableStateOf(GreenPalette)
 
     var emojiState: MutableState<EmojiState> = mutableStateOf(EmojiState.HIDE)
+
+    var albumState: MutableState<AlbumState> = mutableStateOf(AlbumState.HIDE)
 
     var isFocused: MutableState<Boolean> = mutableStateOf(false)
 
