@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
@@ -19,7 +20,9 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.TextFieldValue
@@ -37,6 +40,7 @@ import xt.qc.tappidigi.screens.chat.widgets.ChatHeadingComponent
 import xt.qc.tappidigi.screens.chat.widgets.MessageComponent
 import xt.qc.tappidigi.screens.chat.widgets.MessageStatusComponent
 import xt.qc.tappidigi.screens.profile.ProfileViewModel
+import xt.qc.tappidigi.utils.Status
 
 enum class ActionChat {
     WAIT, SEND, RESEND
@@ -85,45 +89,61 @@ fun ChatScreen(group: Chat.GroupChat? = null, private: Chat.PrivateChat? = null)
             })
         }) {
         ChatHeadingComponent(chatViewModel = chatViewModel, private = private)
-        LazyColumn(
-            modifier = Modifier.weight(1f).fillMaxWidth(),
-            verticalArrangement = Arrangement.Bottom,
-            reverseLayout = true,
-            state = lazyColumnListState
-        ) {
-            items(messages.size) {
-                val msg = messages[it]
-                val prevMsg = messages.getOrNull(it + 1)
-                val nextMsg = messages.getOrNull(it - 1)
-                val position: MessagePosition = when {
-                    prevMsg == null -> MessagePosition.FIRST
-
-                    nextMsg == null -> if (msg.ownerId != prevMsg.ownerId) MessagePosition.SINGLE else MessagePosition.LAST
-
-                    msg.ownerId != prevMsg.ownerId && msg.ownerId != nextMsg.ownerId -> MessagePosition.SINGLE
-
-                    msg.ownerId != prevMsg.ownerId -> MessagePosition.FIRST
-
-                    msg.ownerId != nextMsg.ownerId -> MessagePosition.LAST
-
-                    else -> MessagePosition.MIDDLE
+        when(chatViewModel.status.value) {
+            Status.LOADING -> {
+                Box(
+                    modifier = Modifier.weight(1f).fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = chatViewModel.theme.value.sendButtonColor)
                 }
+            }
+            Status.LOADED -> {
+                LazyColumn(
+                    modifier = Modifier.weight(1f).fillMaxWidth(),
+                    verticalArrangement = Arrangement.Bottom,
+                    reverseLayout = true,
+                    state = lazyColumnListState
+                ) {
+                    items(messages.size) {
+                        val msg = messages[it]
+                        val prevMsg = messages.getOrNull(it + 1)
+                        val nextMsg = messages.getOrNull(it - 1)
+                        val position: MessagePosition = when {
+                            prevMsg == null -> MessagePosition.FIRST
 
-                MessageComponent(
-                    message = msg,
-                    group = group,
-                    private = private,
-                    position = position,
-                    theme = chatViewModel.theme.value,
-                    onResend = {
-                        CoroutineScope(Dispatchers.Main).launch {
-                            chatViewModel.reSendMessage(it)
+                            nextMsg == null -> if (msg.ownerId != prevMsg.ownerId) MessagePosition.SINGLE else MessagePosition.LAST
+
+                            msg.ownerId != prevMsg.ownerId && msg.ownerId != nextMsg.ownerId -> MessagePosition.SINGLE
+
+                            msg.ownerId != prevMsg.ownerId -> MessagePosition.FIRST
+
+                            msg.ownerId != nextMsg.ownerId -> MessagePosition.LAST
+
+                            else -> MessagePosition.MIDDLE
                         }
-                    },
-                )
+
+                        MessageComponent(
+                            message = msg,
+                            group = group,
+                            private = private,
+                            position = position,
+                            theme = chatViewModel.theme.value,
+                            onResend = {
+                                CoroutineScope(Dispatchers.Main).launch {
+                                    chatViewModel.reSendMessage(it)
+                                }
+                            },
+                        )
+                    }
+                }
+                MessageStatusComponent(chatViewModel = chatViewModel)
+            }
+            Status.ERROR -> {
+
             }
         }
-        MessageStatusComponent(chatViewModel = chatViewModel)
+
         MessageTextField(
             chatViewModel = chatViewModel,
             contentController = contentController,

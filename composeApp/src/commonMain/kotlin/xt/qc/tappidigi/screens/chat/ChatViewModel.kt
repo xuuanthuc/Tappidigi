@@ -16,6 +16,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -38,6 +39,7 @@ import xt.qc.tappidigi.models.MessageType
 import xt.qc.tappidigi.models.User
 import xt.qc.tappidigi.utils.ChatThemes
 import xt.qc.tappidigi.utils.GreenPalette
+import xt.qc.tappidigi.utils.Status
 
 enum class EmojiState {
     SHOW, HIDE
@@ -66,6 +68,8 @@ class ChatViewModel(groupUsers: List<User>?, sender: User?, receiver: User?) : V
     var emojiState: MutableState<EmojiState> = mutableStateOf(EmojiState.HIDE)
 
     var isFocused: MutableState<Boolean> = mutableStateOf(false)
+
+    val status: MutableState<Status> = mutableStateOf(Status.LOADING)
 
     init {
         _groupUsers.value = groupUsers ?: listOf()
@@ -132,7 +136,7 @@ class ChatViewModel(groupUsers: List<User>?, sender: User?, receiver: User?) : V
         val snapshot =
             firebase.collection("chats").document(roomId).collection("messages")
                 .orderBy("createdAt").snapshots
-        println("Collected")
+        status.value = Status.LOADED
         snapshot.collect {
             for (dc in it.documentChanges) {
                 when (dc.type) {
