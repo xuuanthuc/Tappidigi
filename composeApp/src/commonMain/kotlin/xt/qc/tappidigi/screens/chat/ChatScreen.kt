@@ -67,6 +67,7 @@ fun ChatScreen(group: Chat.GroupChat? = null, private: Chat.PrivateChat? = null)
         )
     }
     val messages = chatViewModel.message.collectAsState().value
+    val showingDateId = chatViewModel.showingDateId.collectAsState().value
     val focusManager = LocalFocusManager.current
     val lazyColumnListState = rememberLazyListState()
     val scope = rememberCoroutineScope()
@@ -95,7 +96,7 @@ fun ChatScreen(group: Chat.GroupChat? = null, private: Chat.PrivateChat? = null)
             })
         }) {
         ChatHeadingComponent(chatViewModel = chatViewModel, private = private)
-        when(chatViewModel.status.value) {
+        when (chatViewModel.status.value) {
             Status.LOADING -> {
                 Box(
                     modifier = Modifier.weight(1f).fillMaxWidth(),
@@ -104,6 +105,7 @@ fun ChatScreen(group: Chat.GroupChat? = null, private: Chat.PrivateChat? = null)
                     CircularProgressIndicator(color = chatViewModel.theme.value.sendButtonColor)
                 }
             }
+
             Status.LOADED -> {
                 LazyColumn(
                     modifier = Modifier.weight(1f).fillMaxWidth(),
@@ -116,31 +118,35 @@ fun ChatScreen(group: Chat.GroupChat? = null, private: Chat.PrivateChat? = null)
                         val prevMsg = messages.getOrNull(it + 1)
                         val nextMsg = messages.getOrNull(it - 1)
 
-
-                        MessageComponent(
-                            message = msg,
-                            group = group,
-                            private = private,
-                            theme = chatViewModel.theme.value,
-                            nextMsg = nextMsg,
-                            prevMsg = prevMsg,
-                            onResend = {
-                                CoroutineScope(Dispatchers.Main).launch {
-                                    chatViewModel.reSendMessage(it)
-                                }
-                            },
-                        )
+                        Column {
+                            MessageComponent(
+                                message = msg,
+                                group = group,
+                                private = private,
+                                theme = chatViewModel.theme.value,
+                                nextMsg = nextMsg,
+                                prevMsg = prevMsg,
+                                onResend = {
+                                    CoroutineScope(Dispatchers.Main).launch {
+                                        chatViewModel.reSendMessage(it)
+                                    }
+                                },
+                                onShowingDate = { m ->
+                                    chatViewModel.onShowingDate(m)
+                                },
+                                showingDateId = showingDateId ?: ""
+                            )
+                        }
                     }
                 }
-                MessageStatusComponent(chatViewModel = chatViewModel)
             }
+
             Status.ERROR -> {
 
             }
         }
 
-        MessageTextField(
-            chatViewModel = chatViewModel,
+        MessageTextField(chatViewModel = chatViewModel,
             contentController = contentController,
             onSend = {
                 scope.launch {

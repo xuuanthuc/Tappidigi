@@ -1,29 +1,34 @@
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkOut
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.ime
-import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.Button
@@ -39,36 +44,27 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusModifier
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.focus.focusTarget
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
-import coil3.compose.AsyncImage
-import coil3.request.ImageRequest
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
-import org.koin.compose.koinInject
 import tappidigi.composeapp.generated.resources.Res
-import tappidigi.composeapp.generated.resources.emoji
-import tappidigi.composeapp.generated.resources.keyboard
-import tappidigi.composeapp.generated.resources.send
-import xt.qc.tappidigi.screens.authentication.SignInWithGoogleManager
+import tappidigi.composeapp.generated.resources.*
 import xt.qc.tappidigi.screens.chat.AlbumState
 import xt.qc.tappidigi.screens.chat.ChatViewModel
 import xt.qc.tappidigi.screens.chat.EmojiState
 import xt.qc.tappidigi.utils.ColorsPalette
-import xt.qc.tappidigi.utils.Platform
 
 @Composable
 fun MessageTextField(
@@ -77,6 +73,7 @@ fun MessageTextField(
     onSend: (String) -> Unit,
 ) {
     var isLabelVisible by remember { mutableStateOf(true) }
+    val maxChatLines = remember { mutableStateOf(1) }
 
     LaunchedEffect(contentController.value.text) {
         isLabelVisible = contentController.value.text.isEmpty()
@@ -85,11 +82,24 @@ fun MessageTextField(
     val focusManager = LocalFocusManager.current
     val interactionSource = remember { MutableInteractionSource() }
     val isFocused by interactionSource.collectIsFocusedAsState()
+    val toolbarIsShowing = remember { mutableStateOf(true) }
 
     LaunchedEffect(isFocused) {
         chatViewModel.isFocused.value = isFocused
         if (isFocused) {
             chatViewModel.emojiState.value = EmojiState.HIDE
+        }
+        toolbarIsShowing.value = !isFocused
+    }
+
+    LaunchedEffect(toolbarIsShowing.value) {
+        CoroutineScope(Dispatchers.Main).launch {
+            if (toolbarIsShowing.value) {
+                maxChatLines.value = 1
+            } else {
+                delay(300)
+                maxChatLines.value = 5
+            }
         }
     }
 
@@ -102,114 +112,207 @@ fun MessageTextField(
         targetValue = if (isLabelVisible) 0 else 8,
         animationSpec = tween(durationMillis = animationDuration)
     )
+
     Row(
         modifier = Modifier.background(ColorsPalette.softFern).padding(8.dp),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.Bottom
     ) {
-        Button(
-            onClick = {
-                when(chatViewModel.albumState.value) {
-                    AlbumState.SHOW -> {
-                        chatViewModel.albumState.value = AlbumState.HIDE
-                    }
-                    AlbumState.HIDE -> {
-                        chatViewModel.albumState.value = AlbumState.SHOW
-                    }
-                }
-            },
-            modifier = Modifier.size(40.dp),
-            contentPadding = PaddingValues(0.dp),
-            shape = RoundedCornerShape(8.dp),
-            colors = ButtonColors(
-                containerColor = Color.Transparent,
-                contentColor = chatViewModel.theme.value.sendButtonColor,
-                disabledContainerColor = Color.Gray,
-                disabledContentColor = Color.Gray
+        AnimatedVisibility(
+            visible = !toolbarIsShowing.value,
+            modifier = Modifier.height(40.dp),
+            enter = expandHorizontally(),
+            exit = shrinkOut(shrinkTowards = Alignment.CenterEnd)
+        ) {
+            Button(
+                onClick = {
+                    toolbarIsShowing.value = true
+                },
+                modifier = Modifier.size(40.dp),
+                contentPadding = PaddingValues(0.dp),
+                shape = RoundedCornerShape(8.dp),
+                colors = ButtonColors(
+                    containerColor = Color.Transparent,
+                    contentColor = chatViewModel.theme.value.ownerColor,
+                    disabledContainerColor = Color.Gray,
+                    disabledContentColor = Color.Gray
+                )
+            ) {
+                Icon(
+                    painter = painterResource(Res.drawable.arrow_left),
+                    contentDescription = "",
+                )
+            }
+        }
+        AnimatedVisibility(
+            visible = toolbarIsShowing.value,
+            modifier = Modifier.height(40.dp),
+            enter = expandHorizontally(),
+            exit = slideOutHorizontally() + shrinkOut(
+                shrinkTowards = Alignment.CenterEnd,
             )
         ) {
-            Icon(
-                painter = painterResource(Res.drawable.emoji), contentDescription = ""
-            )
-        }
-        Box(Modifier.weight(1f).fillMaxWidth().height(40.dp)) {
-            BasicTextField(
-                value = contentController.value,
-                interactionSource = interactionSource,
-                onValueChange = { newValue ->
-                    contentController.value = newValue
-                },
-                modifier = Modifier.fillMaxSize().focusRequester(focusRequester),
-                decorationBox = { innerTextField ->
-                    Box(
-                        Modifier.fillMaxHeight().background(
-                            color = Color.White, shape = RoundedCornerShape(8.dp)
-                        ).padding(4.dp), contentAlignment = Alignment.CenterStart
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-
-                            ) {
-                            Box(
-                                modifier = Modifier.weight(1f)
-                                    .padding(horizontal = 8.dp, vertical = 4.dp)
-                            ) {
-                                innerTextField()
+            Row {
+                Button(
+                    onClick = {
+                        when (chatViewModel.albumState.value) {
+                            AlbumState.SHOW -> {
+                                chatViewModel.albumState.value = AlbumState.HIDE
                             }
-                            Button(
-                                onClick = {
-                                    CoroutineScope(Dispatchers.Main).launch {
-                                        when (chatViewModel.emojiState.value) {
-                                            EmojiState.SHOW -> {
-                                                focusRequester.requestFocus()
-                                                chatViewModel.emojiState.value = EmojiState.HIDE
-                                            }
 
-                                            EmojiState.HIDE -> {
-                                                focusManager.clearFocus()
-                                                delay(200)
-                                                chatViewModel.emojiState.value = EmojiState.SHOW
-                                            }
-                                        }
-                                    }
-                                },
-                                modifier = Modifier.size(40.dp),
-                                contentPadding = PaddingValues(0.dp),
-                                shape = RoundedCornerShape(8.dp),
-                                colors = ButtonColors(
-                                    containerColor = Color.Transparent,
-                                    contentColor = chatViewModel.theme.value.sendButtonColor,
-                                    disabledContainerColor = Color.Gray,
-                                    disabledContentColor = Color.Gray
-                                )
-                            ) {
-                                Icon(
-                                    painter = painterResource(
-                                        when (chatViewModel.emojiState.value) {
-                                            EmojiState.SHOW -> {
-                                                Res.drawable.keyboard
-                                            }
-
-                                            EmojiState.HIDE -> {
-                                                Res.drawable.emoji
-                                            }
-                                        }
-                                    ), contentDescription = ""
-                                )
+                            AlbumState.HIDE -> {
+                                chatViewModel.albumState.value = AlbumState.SHOW
                             }
                         }
-                        if (isLabelVisible) {
-                            Text(
-                                "Type a message...", style = TextStyle(
-                                    color = Color.Gray,
-                                    fontWeight = FontWeight.W300,
-                                ), modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                    },
+                    modifier = Modifier.size(40.dp),
+                    contentPadding = PaddingValues(0.dp),
+                    shape = RoundedCornerShape(8.dp),
+                    colors = ButtonColors(
+                        containerColor = Color.Transparent,
+                        contentColor = chatViewModel.theme.value.ownerColor,
+                        disabledContainerColor = Color.Gray,
+                        disabledContentColor = Color.Gray
+                    )
+                ) {
+                    Icon(
+                        painter = painterResource(Res.drawable.camera), contentDescription = ""
+                    )
+                }
+                Button(
+                    onClick = {
+                        when (chatViewModel.albumState.value) {
+                            AlbumState.SHOW -> {
+                                chatViewModel.albumState.value = AlbumState.HIDE
+                            }
+
+                            AlbumState.HIDE -> {
+                                chatViewModel.albumState.value = AlbumState.SHOW
+                            }
+                        }
+                    },
+                    modifier = Modifier.size(40.dp),
+                    contentPadding = PaddingValues(0.dp),
+                    shape = RoundedCornerShape(8.dp),
+                    colors = ButtonColors(
+                        containerColor = Color.Transparent,
+                        contentColor = chatViewModel.theme.value.ownerColor,
+                        disabledContainerColor = Color.Gray,
+                        disabledContentColor = Color.Gray
+                    )
+                ) {
+                    Icon(
+                        painter = painterResource(Res.drawable.album), contentDescription = ""
+                    )
+                }
+                Button(
+                    onClick = {
+                        when (chatViewModel.albumState.value) {
+                            AlbumState.SHOW -> {
+                                chatViewModel.albumState.value = AlbumState.HIDE
+                            }
+
+                            AlbumState.HIDE -> {
+                                chatViewModel.albumState.value = AlbumState.SHOW
+                            }
+                        }
+                    },
+                    modifier = Modifier.size(40.dp),
+                    contentPadding = PaddingValues(0.dp),
+                    shape = RoundedCornerShape(8.dp),
+                    colors = ButtonColors(
+                        containerColor = Color.Transparent,
+                        contentColor = chatViewModel.theme.value.ownerColor,
+                        disabledContainerColor = Color.Gray,
+                        disabledContentColor = Color.Gray
+                    )
+                ) {
+                    Icon(
+                        painter = painterResource(Res.drawable.microphone), contentDescription = ""
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.width(8.dp))
+        BasicTextField(
+            value = contentController.value,
+            interactionSource = interactionSource,
+            onValueChange = { newValue ->
+                contentController.value = newValue
+                toolbarIsShowing.value = false
+            },
+            maxLines = maxChatLines.value,
+            modifier = Modifier.weight(1f).height(IntrinsicSize.Min).focusRequester(focusRequester),
+            decorationBox = { innerTextField ->
+                Box(
+                    Modifier.fillMaxHeight().background(
+                        color = Color.White, shape = RoundedCornerShape(8.dp)
+                    ), contentAlignment = Alignment.CenterStart
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+
+                        ) {
+                        Box(
+                            modifier = Modifier.weight(1f)
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                        ) {
+                            innerTextField()
+                        }
+                        Button(
+                            onClick = {
+                                CoroutineScope(Dispatchers.Main).launch {
+                                    when (chatViewModel.emojiState.value) {
+                                        EmojiState.SHOW -> {
+                                            focusRequester.requestFocus()
+                                            chatViewModel.emojiState.value = EmojiState.HIDE
+                                        }
+
+                                        EmojiState.HIDE -> {
+                                            focusManager.clearFocus()
+                                            delay(200)
+                                            chatViewModel.emojiState.value = EmojiState.SHOW
+                                        }
+                                    }
+                                }
+                            },
+                            modifier = Modifier.size(40.dp),
+                            contentPadding = PaddingValues(0.dp),
+                            shape = RoundedCornerShape(8.dp),
+                            colors = ButtonColors(
+                                containerColor = Color.Transparent,
+                                contentColor = chatViewModel.theme.value.sendButtonColor,
+                                disabledContainerColor = Color.Gray,
+                                disabledContentColor = Color.Gray
+                            )
+                        ) {
+                            Icon(
+                                painter = painterResource(
+                                    when (chatViewModel.emojiState.value) {
+                                        EmojiState.SHOW -> {
+                                            Res.drawable.keyboard
+                                        }
+
+                                        EmojiState.HIDE -> {
+                                            Res.drawable.emoji
+                                        }
+                                    }
+                                ), contentDescription = ""
                             )
                         }
                     }
+                    if (isLabelVisible) {
+                        Text(
+                            "Type a message...", style = TextStyle(
+                                color = Color.Gray,
+                                fontWeight = FontWeight.W300,
+                            ), modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        )
+                    }
+                }
 
-                },
-            )
-        }
+            },
+        )
         Spacer(modifier = Modifier.width(sentMessageButtonMargin.dp))
         AnimatedVisibility(
             visible = !isLabelVisible,

@@ -30,6 +30,12 @@ enum class MessageStatus {
     SENDING,
     ERROR,
     SENT;
+
+    fun toContent(): String =  when (this) {
+        SENDING -> "Sending"
+        ERROR -> "Couldn't send!"
+        SENT -> "Sent!"
+    }
 }
 
 enum class MessagePosition {

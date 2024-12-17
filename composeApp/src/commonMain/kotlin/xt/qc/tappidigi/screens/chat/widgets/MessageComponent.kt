@@ -2,8 +2,12 @@ package xt.qc.tappidigi.screens.chat.widgets
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -12,6 +16,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -20,6 +25,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -32,13 +40,10 @@ import coil3.compose.AsyncImage
 import kotlinx.datetime.Clock
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.Instant
-import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.format
-import kotlinx.datetime.format.DateTimeComponents
 import kotlinx.datetime.format.DateTimeFormat
-import kotlinx.datetime.format.DateTimeFormatBuilder
 import kotlinx.datetime.format.DayOfWeekNames
 import kotlinx.datetime.format.FormatStringsInDatetimeFormats
 import kotlinx.datetime.format.MonthNames
@@ -115,7 +120,10 @@ fun MessageComponent(
     group: Chat.GroupChat? = null,
     private: Chat.PrivateChat? = null,
     onResend: (Message) -> Unit,
+    onShowingDate: (Message?) -> Unit,
+    showingDateId: String,
 ) {
+    val showingTime = remember { mutableStateOf(false) }
     val profile = koinInject<ProfileViewModel>()
     val owner = msgOwner(message, group, private)
     val isMe = profile.userState.value?.uid == owner?.uid
@@ -138,7 +146,17 @@ fun MessageComponent(
 
     val period: Long = prevMsgTime.until(msgTime, DateTimeUnit.HOUR, TimeZone.UTC)
 
-    val visibleTime = period > 0
+    val fixedDatetimeShowing = period > 0
+
+    LaunchedEffect(showingDateId) {
+        if (fixedDatetimeShowing) {
+            showingTime.value = true
+        } else if (showingDateId == message.id) {
+            showingTime.value = true
+        } else {
+            showingTime.value = false
+        }
+    }
 
 
     fun <T> gap(first: T, second: T): T {
@@ -176,12 +194,21 @@ fun MessageComponent(
     )
 
     Column {
-        if (visibleTime) {
+        AnimatedVisibility(
+            visible = showingTime.value,
+            enter = slideInVertically() + expandVertically(expandFrom = Alignment.Top) + fadeIn(
+                initialAlpha = 0.3f
+            ),
+            exit = slideOutVertically() + shrinkVertically(shrinkTowards = Alignment.Top) + fadeOut()
+        ) {
             Box(
                 contentAlignment = Alignment.Center,
-                modifier = Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 4.dp)
+                modifier = Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 4.dp)
             ) {
-                Text(msgTime.toFormatedString(), style = TextStyle(fontSize = 12.sp))
+                Text(
+                    msgTime.toFormatedString(),
+                    style = TextStyle(fontSize = 10.sp, color = Color.Gray)
+                )
             }
         }
         Row(
@@ -205,11 +232,19 @@ fun MessageComponent(
                         color = gap(Color.White, Color.Black)
                     ),
                     modifier = Modifier.pointerInput(message) {
-                        detectTapGestures(onTap = {
-                            if (message.status.value == MessageStatus.ERROR) {
-                                onResend.invoke(message)
-                            }
-                        })
+                        detectTapGestures(
+                            onTap = {
+                                if (message.status.value == MessageStatus.ERROR) {
+                                    onResend.invoke(message)
+                                } else if (fixedDatetimeShowing || message.status.value == MessageStatus.SENDING) {
+                                    return@detectTapGestures
+                                } else if (!showingTime.value) {
+                                    onShowingDate.invoke(message)
+                                } else {
+                                    onShowingDate.invoke(null)
+                                }
+                            },
+                        )
                     }.background(
                         gap(
                             theme.ownerColor, theme.otherColor,
@@ -235,19 +270,25 @@ fun MessageComponent(
             }
         }
         AnimatedVisibility(
-            visible = message.status.value == MessageStatus.ERROR,
-            enter = fadeIn(),
-            exit = fadeOut()
+            visible = showingTime.value && !fixedDatetimeShowing,
+            enter = slideInVertically() + expandVertically(expandFrom = Alignment.Top) + fadeIn(
+                initialAlpha = 0.3f
+            ),
+            exit = slideOutVertically() + shrinkVertically(shrinkTowards = Alignment.Top) + fadeOut()
         ) {
-            Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
+            Box(
+                modifier = Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 8.dp),
+                contentAlignment = Alignment.CenterEnd
+            ) {
                 Text(
-                    "Couldn't send!", style = TextStyle(
-                        color = Color.Red, fontSize = 12.sp
-                    )
+                    message.status.value.toContent(), style = TextStyle(
+                        color = Color.Gray, fontSize = 10.sp
+                    ), modifier = Modifier.padding(end = 8.dp)
                 )
-                Spacer(modifier = Modifier.width(4.dp))
             }
         }
+        MessageStatusComponent(message = message)
+        Box(modifier = Modifier.height(if (nextMsg == null) 30.dp else 0.dp))
     }
 }
 

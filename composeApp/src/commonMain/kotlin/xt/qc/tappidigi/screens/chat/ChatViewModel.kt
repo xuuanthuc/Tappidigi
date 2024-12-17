@@ -14,6 +14,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -52,6 +53,9 @@ class ChatViewModel(groupUsers: List<User>?, sender: User?, receiver: User?) : V
     private val _roomId = MutableStateFlow<String?>(null)
     private val roomId: StateFlow<String?> = _roomId.asStateFlow()
 
+    private val _showingDateId = MutableStateFlow<String?>(null)
+    val showingDateId: StateFlow<String?> = _showingDateId.asStateFlow()
+
     private val _emojis = MutableStateFlow<List<Emoji>>(emptyList())
     val emojis: StateFlow<List<Emoji>> = _emojis.asStateFlow()
 
@@ -84,6 +88,7 @@ class ChatViewModel(groupUsers: List<User>?, sender: User?, receiver: User?) : V
                 status = mutableStateOf(MessageStatus.SENDING),
             )
         _messages.value.add(0, message)
+        delay(1000)
         try {
             firebase.collection("chats").document(roomId.value!!).collection("messages")
                 .document(message.id).set(Properties.encodeToMap(message))
@@ -128,6 +133,10 @@ class ChatViewModel(groupUsers: List<User>?, sender: User?, receiver: User?) : V
         } else {
             createPrivateChatRoom(chat)
         }
+    }
+
+    fun onShowingDate(message: Message?) {
+        _showingDateId.value = message?.id
     }
 
     private suspend fun getMessages(roomId: String) {
