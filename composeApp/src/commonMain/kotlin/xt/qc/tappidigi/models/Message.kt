@@ -34,7 +34,7 @@ enum class MessageStatus {
     fun toContent(): String =  when (this) {
         SENDING -> "Sending"
         ERROR -> "Couldn't send!"
-        SENT -> "Sent!"
+        SENT -> "Sent"
     }
 }
 

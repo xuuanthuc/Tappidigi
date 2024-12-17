@@ -88,7 +88,6 @@ class ChatViewModel(groupUsers: List<User>?, sender: User?, receiver: User?) : V
                 status = mutableStateOf(MessageStatus.SENDING),
             )
         _messages.value.add(0, message)
-        delay(1000)
         try {
             firebase.collection("chats").document(roomId.value!!).collection("messages")
                 .document(message.id).set(Properties.encodeToMap(message))
