@@ -8,6 +8,7 @@ import androidx.lifecycle.ViewModel
 import com.benasher44.uuid.uuid4
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.firestore.ChangeType
+import dev.gitlive.firebase.firestore.Timestamp
 import dev.gitlive.firebase.firestore.firestore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -80,7 +81,7 @@ class ChatViewModel(groupUsers: List<User>?, sender: User?, receiver: User?) : V
                 content = content,
                 ownerId = uid,
                 messageType = MessageType.TEXT.ordinal,
-                status = mutableStateOf(MessageStatus.SENDING)
+                status = mutableStateOf(MessageStatus.SENDING),
             )
         _messages.value.add(0, message)
         try {

@@ -29,6 +29,24 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
+import kotlinx.datetime.Clock
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.format
+import kotlinx.datetime.format.DateTimeComponents
+import kotlinx.datetime.format.DateTimeFormat
+import kotlinx.datetime.format.DateTimeFormatBuilder
+import kotlinx.datetime.format.DayOfWeekNames
+import kotlinx.datetime.format.FormatStringsInDatetimeFormats
+import kotlinx.datetime.format.MonthNames
+import kotlinx.datetime.format.byUnicodePattern
+import kotlinx.datetime.format.char
+import kotlinx.datetime.periodUntil
+import kotlinx.datetime.toLocalDateTime
+import kotlinx.datetime.until
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
 import tappidigi.composeapp.generated.resources.Res
@@ -41,18 +59,87 @@ import xt.qc.tappidigi.models.User
 import xt.qc.tappidigi.screens.profile.ProfileViewModel
 import xt.qc.tappidigi.utils.ChatThemes
 
+
+@OptIn(FormatStringsInDatetimeFormats::class)
+fun Instant.toFormatedString(): String {
+    val period = this.periodUntil(Clock.System.now(), TimeZone.UTC)
+    val todayFormatter = LocalDateTime.Format {
+        byUnicodePattern("'Today,' HH:mm")
+    }
+
+    val weekFormatter = LocalDateTime.Format {
+        dayOfWeek(DayOfWeekNames.ENGLISH_FULL)
+        char(',')
+        char(' ')
+        byUnicodePattern("HH:mm")
+    }
+
+    val monthFormatter = LocalDateTime.Format {
+        dayOfMonth()
+        char(' ')
+        monthName(MonthNames.ENGLISH_FULL)
+        char(',')
+        char(' ')
+        byUnicodePattern("HH:mm")
+    }
+
+    val yearFormatter = LocalDateTime.Format {
+        dayOfMonth()
+        char(' ')
+        monthName(MonthNames.ENGLISH_FULL)
+        char(' ')
+        year()
+        char(',')
+        char(' ')
+        byUnicodePattern("HH:mm")
+    }
+
+    val formatter: DateTimeFormat<LocalDateTime> = if (period.days == 0) {
+        todayFormatter
+    } else if (period.days in 1..7) {
+        weekFormatter
+    } else if (period.days > 7 && period.years == 0) {
+        monthFormatter
+    } else {
+        yearFormatter
+    }
+    return this.toLocalDateTime(TimeZone.currentSystemDefault()).format(formatter)
+}
+
 @Composable
 fun MessageComponent(
     message: Message,
+    nextMsg: Message?,
+    prevMsg: Message?,
     theme: ChatThemes,
     group: Chat.GroupChat? = null,
     private: Chat.PrivateChat? = null,
-    position: MessagePosition,
     onResend: (Message) -> Unit,
 ) {
     val profile = koinInject<ProfileViewModel>()
     val owner = msgOwner(message, group, private)
     val isMe = profile.userState.value?.uid == owner?.uid
+    val position: MessagePosition = when {
+        prevMsg == null -> MessagePosition.FIRST
+
+        nextMsg == null -> if (message.ownerId != prevMsg.ownerId) MessagePosition.SINGLE else MessagePosition.LAST
+
+        message.ownerId != prevMsg.ownerId && message.ownerId != nextMsg.ownerId -> MessagePosition.SINGLE
+
+        message.ownerId != prevMsg.ownerId -> MessagePosition.FIRST
+
+        message.ownerId != nextMsg.ownerId -> MessagePosition.LAST
+
+        else -> MessagePosition.MIDDLE
+    }
+
+    val prevMsgTime = Instant.fromEpochSeconds(prevMsg?.createdAt ?: 0)
+    val msgTime = Instant.fromEpochSeconds(message.createdAt)
+
+    val period: Long = prevMsgTime.until(msgTime, DateTimeUnit.HOUR, TimeZone.UTC)
+
+    val visibleTime = period > 0
+
 
     fun <T> gap(first: T, second: T): T {
         return if (isMe) first else second
@@ -89,6 +176,14 @@ fun MessageComponent(
     )
 
     Column {
+        if (visibleTime) {
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 4.dp)
+            ) {
+                Text(msgTime.toFormatedString(), style = TextStyle(fontSize = 12.sp))
+            }
+        }
         Row(
             modifier = Modifier.padding(
                 end = gap(0.dp, 80.dp), start = gap(80.dp, 0.dp)

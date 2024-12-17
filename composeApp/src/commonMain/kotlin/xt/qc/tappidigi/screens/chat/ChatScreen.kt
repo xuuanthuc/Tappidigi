@@ -115,26 +115,15 @@ fun ChatScreen(group: Chat.GroupChat? = null, private: Chat.PrivateChat? = null)
                         val msg = messages[it]
                         val prevMsg = messages.getOrNull(it + 1)
                         val nextMsg = messages.getOrNull(it - 1)
-                        val position: MessagePosition = when {
-                            prevMsg == null -> MessagePosition.FIRST
 
-                            nextMsg == null -> if (msg.ownerId != prevMsg.ownerId) MessagePosition.SINGLE else MessagePosition.LAST
-
-                            msg.ownerId != prevMsg.ownerId && msg.ownerId != nextMsg.ownerId -> MessagePosition.SINGLE
-
-                            msg.ownerId != prevMsg.ownerId -> MessagePosition.FIRST
-
-                            msg.ownerId != nextMsg.ownerId -> MessagePosition.LAST
-
-                            else -> MessagePosition.MIDDLE
-                        }
 
                         MessageComponent(
                             message = msg,
                             group = group,
                             private = private,
-                            position = position,
                             theme = chatViewModel.theme.value,
+                            nextMsg = nextMsg,
+                            prevMsg = prevMsg,
                             onResend = {
                                 CoroutineScope(Dispatchers.Main).launch {
                                     chatViewModel.reSendMessage(it)
