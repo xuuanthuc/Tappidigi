@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">Wibso</string>
+    <string name="home">Trang chủ</string>
+    <string name="communities">Cộng đồng</string>
+    <string name="messages">Tin nhắn</string>
+    <string name="create">Tạo</string>
+    <string name="profile">Hồ sơ</string>
+    <string name="notification">Thông báo</string>
+    <string name="search">Tìm kiếm</string>
+</resources>

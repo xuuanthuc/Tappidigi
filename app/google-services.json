@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "235044783929",
+    "project_id": "tappidigi",
+    "storage_bucket": "tappidigi.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:235044783929:android:be745c6ddc0ffe02208ae8",
+        "android_client_info": {
+          "package_name": "xt.qc.tappidigi"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "235044783929-7am44pccq5adasp7rqqbo77atftp43gb.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "xt.qc.tappidigi",
+            "certificate_hash": "b02c7e70f356362b95710a29c9dca1d67b8113fa"
+          }
+        },
+        {
+          "client_id": "235044783929-8um2q9djvgito9863bbqu2pi6ee51a36.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "xt.qc.tappidigi",
+            "certificate_hash": "2e10e11306e737b96b539ecb656176ef54160e30"
+          }
+        },
+        {
+          "client_id": "235044783929-tjdpfrcsmmtvngktft5te1iegj4e71ur.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBXj14pUSty5dQIBoSPlmnwNNr0b4l4bpg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "235044783929-tjdpfrcsmmtvngktft5te1iegj4e71ur.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
