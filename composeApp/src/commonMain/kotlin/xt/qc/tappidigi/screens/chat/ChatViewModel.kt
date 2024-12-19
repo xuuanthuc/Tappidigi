@@ -142,7 +142,6 @@ class ChatViewModel(groupUsers: List<User>?, sender: User?, receiver: User?) : V
         val snapshot =
             firebase.collection("chats").document(roomId).collection("messages")
                 .orderBy("createdAt").snapshots
-        status.value = Status.LOADED
         snapshot.collect {
             for (dc in it.documentChanges) {
                 when (dc.type) {
@@ -174,6 +173,9 @@ class ChatViewModel(groupUsers: List<User>?, sender: User?, receiver: User?) : V
                         TODO()
                     }
                 }
+            }
+            if (status.value != Status.LOADED) {
+                status.value = Status.LOADED
             }
         }
     }

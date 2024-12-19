@@ -26,6 +26,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -140,16 +141,35 @@ fun MessageComponent(
 
         else -> MessagePosition.MIDDLE
     }
+    val prevMsgTime: MutableState<Instant> =
+        remember { mutableStateOf(Instant.fromEpochSeconds(prevMsg?.createdAt ?: 0)) }
+    val msgTime: MutableState<Instant> =
+        remember { mutableStateOf(Instant.fromEpochSeconds(message.createdAt)) }
+    val period: MutableState<Long> = remember {
+        mutableStateOf(
+            prevMsgTime.value.until(
+                msgTime.value, DateTimeUnit.HOUR, TimeZone.UTC
+            )
+        )
+    }
+    val fixedDatetimeShowing: MutableState<Boolean> = remember { mutableStateOf(period.value > 0) }
 
-    val prevMsgTime = Instant.fromEpochSeconds(prevMsg?.createdAt ?: 0)
-    val msgTime = Instant.fromEpochSeconds(message.createdAt)
-
-    val period: Long = prevMsgTime.until(msgTime, DateTimeUnit.HOUR, TimeZone.UTC)
-
-    val fixedDatetimeShowing = period > 0
+    LaunchedEffect(message) {
+        prevMsgTime.value = Instant.fromEpochSeconds(prevMsg?.createdAt ?: 0)
+        msgTime.value = Instant.fromEpochSeconds(message.createdAt)
+        period.value = prevMsgTime.value.until(msgTime.value, DateTimeUnit.HOUR, TimeZone.UTC)
+        fixedDatetimeShowing.value = period.value > 0
+        if (fixedDatetimeShowing.value) {
+            showingTime.value = true
+        } else if (showingDateId == message.id) {
+            showingTime.value = true
+        } else {
+            showingTime.value = false
+        }
+    }
 
     LaunchedEffect(showingDateId) {
-        if (fixedDatetimeShowing) {
+        if (fixedDatetimeShowing.value) {
             showingTime.value = true
         } else if (showingDateId == message.id) {
             showingTime.value = true
@@ -206,7 +226,7 @@ fun MessageComponent(
                 modifier = Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 4.dp)
             ) {
                 Text(
-                    msgTime.toFormatedString(),
+                    msgTime.value.toFormatedString(),
                     style = TextStyle(fontSize = 10.sp, color = Color.Gray)
                 )
             }
@@ -236,7 +256,7 @@ fun MessageComponent(
                             onTap = {
                                 if (message.status.value == MessageStatus.ERROR) {
                                     onResend.invoke(message)
-                                } else if (fixedDatetimeShowing || message.status.value == MessageStatus.SENDING) {
+                                } else if (fixedDatetimeShowing.value || message.status.value == MessageStatus.SENDING) {
                                     return@detectTapGestures
                                 } else if (!showingTime.value) {
                                     onShowingDate.invoke(message)
@@ -270,7 +290,7 @@ fun MessageComponent(
             }
         }
         AnimatedVisibility(
-            visible = showingTime.value && !fixedDatetimeShowing,
+            visible = showingTime.value && !fixedDatetimeShowing.value,
             enter = slideInVertically() + expandVertically(expandFrom = Alignment.Top) + fadeIn(
                 initialAlpha = 0.3f
             ),

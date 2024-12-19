@@ -8,13 +8,18 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
@@ -28,6 +33,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -107,35 +113,54 @@ fun ChatScreen(group: Chat.GroupChat? = null, private: Chat.PrivateChat? = null)
             }
 
             Status.LOADED -> {
-                LazyColumn(
-                    modifier = Modifier.weight(1f).fillMaxWidth(),
-                    verticalArrangement = Arrangement.Bottom,
-                    reverseLayout = true,
-                    state = lazyColumnListState
-                ) {
-                    items(messages.size) {
-                        val msg = messages[it]
-                        val prevMsg = messages.getOrNull(it + 1)
-                        val nextMsg = messages.getOrNull(it - 1)
+                if (messages.isEmpty()) {
+                    Box(
+                        modifier = Modifier.weight(1f).fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
 
-                        Column {
-                            MessageComponent(
-                                message = msg,
-                                group = group,
-                                private = private,
-                                theme = chatViewModel.theme.value,
-                                nextMsg = nextMsg,
-                                prevMsg = prevMsg,
-                                onResend = {
-                                    CoroutineScope(Dispatchers.Main).launch {
-                                        chatViewModel.reSendMessage(it)
-                                    }
-                                },
-                                onShowingDate = { m ->
-                                    chatViewModel.onShowingDate(m)
-                                },
-                                showingDateId = showingDateId ?: ""
-                            )
+                        Text(
+                            "No messages here yet...", style = TextStyle(
+                                color = Color.White
+                            ), modifier = Modifier.background(
+                                chatViewModel.theme.value.sendButtonColor.copy(
+                                    alpha = 0.5f
+                                ), shape = RoundedCornerShape(10.dp)
+                            ).padding(30.dp)
+                        )
+
+                    }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.weight(1f).fillMaxWidth(),
+                        verticalArrangement = Arrangement.Bottom,
+                        reverseLayout = true,
+                        state = lazyColumnListState
+                    ) {
+                        items(messages.size) {
+                            val msg = messages[it]
+                            val prevMsg = messages.getOrNull(it + 1)
+                            val nextMsg = messages.getOrNull(it - 1)
+
+                            Column {
+                                MessageComponent(
+                                    message = msg,
+                                    group = group,
+                                    private = private,
+                                    theme = chatViewModel.theme.value,
+                                    nextMsg = nextMsg,
+                                    prevMsg = prevMsg,
+                                    onResend = {
+                                        CoroutineScope(Dispatchers.Main).launch {
+                                            chatViewModel.reSendMessage(it)
+                                        }
+                                    },
+                                    onShowingDate = { m ->
+                                        chatViewModel.onShowingDate(m)
+                                    },
+                                    showingDateId = showingDateId ?: ""
+                                )
+                            }
                         }
                     }
                 }
@@ -146,7 +171,8 @@ fun ChatScreen(group: Chat.GroupChat? = null, private: Chat.PrivateChat? = null)
             }
         }
 
-        MessageTextField(chatViewModel = chatViewModel,
+        MessageTextField(
+            chatViewModel = chatViewModel,
             contentController = contentController,
             onSend = {
                 scope.launch {
