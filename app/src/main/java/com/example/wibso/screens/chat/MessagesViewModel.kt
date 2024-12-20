@@ -1,42 +1,40 @@
 package com.example.wibso.screens.chat
 
 import androidx.lifecycle.ViewModel
+import com.example.wibso.models.AccountRoom
+import com.example.wibso.models.User
+import com.google.firebase.Firebase
+import com.google.firebase.firestore.firestore
+import com.google.firebase.firestore.toObject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import com.example.wibso.models.AccountRoom
-import com.example.wibso.models.User
-import com.google.firebase.Firebase
-import com.google.firebase.firestore.dataObjects
-import com.google.firebase.firestore.firestore
-import com.google.firebase.firestore.ktx.dataObjects
 import kotlinx.coroutines.launch
-import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.properties.Properties
-import kotlinx.serialization.properties.decodeFromMap
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 
 class MessagesViewModel : ViewModel() {
     private val firebase = Firebase.firestore
     private val _groupChats = MutableStateFlow<List<List<User>>>(listOf())
     val groupChats: StateFlow<List<List<User>>> = _groupChats.asStateFlow()
 
-    @OptIn(ExperimentalSerializationApi::class)
-    suspend fun getMyMessages(user: User) {
+    suspend fun getMyMessages(user: User) = coroutineScope {
         user.uid?.let { uid ->
-            val myRooms =
-                firebase.collection("accounts").document(uid).collection("chats").get().addOnSuccessListener { documents ->
-                    val deferredResults = documents.map {
+
+            firebase.collection("accounts").document(uid).collection("chats").get()
+                .addOnSuccessListener { docs ->
+                    val deferredResults = docs.map {
                         CoroutineScope(Dispatchers.IO).async {
-                            val room =
-                                Properties.decodeFromMap<AccountRoom>(map = it?.data ?: mapOf())
+                            val room = it.toObject<AccountRoom>()
                             listOf(getRoomInformation(room, user))
                         }
                     }
-                    CoroutineScope(Dispatchers.Main).launch {
+                    CoroutineScope(Dispatchers.IO).launch {
                         val result = deferredResults.awaitAll()
                         _groupChats.value = result.flatten().filter { it.isNotEmpty() }
                     }
@@ -44,33 +42,39 @@ class MessagesViewModel : ViewModel() {
         }
     }
 
-    private suspend fun getRoomInformation(room: AccountRoom, user: User): List<User> {
-        val users: ArrayList<User> = arrayListOf()
+    private suspend fun getRoomInformation(room: AccountRoom, user: User): List<User> =
+        suspendCoroutine { continuation ->
+            val users: ArrayList<User> = arrayListOf()
 
-        val roomMessage = firebase.collection("chats").document(room.roomId).collection("messages")
-            .get().result.documents
-
-        if (roomMessage.isEmpty()) return emptyList()
-
-        val roomMembers =
-            firebase.collection("chats").document(room.roomId).collection("members").get().result.documents
-        roomMembers.forEach {
-            if (it.id != user.uid) {
-                getRoomChatWithUser(it.id)?.let { u ->
-                    users.add(u)
+            firebase.collection("chats").document(room.roomId!!).collection("messages").get()
+                .addOnSuccessListener { roomMessageDocs ->
+                    if (roomMessageDocs.isEmpty) {
+                        continuation.resume(emptyList())
+                    } else {
+                        firebase.collection("chats").document(room.roomId).collection("members")
+                            .get().addOnSuccessListener { roomMembersDocs ->
+                                CoroutineScope(Dispatchers.IO).launch {
+                                    roomMembersDocs.forEach {
+                                        if (it.id != user.uid) {
+                                            getRoomChatWithUser(it.id)?.let { u ->
+                                                users.add(u)
+                                            }
+                                        }
+                                    }
+                                    continuation.resume(users.toList())
+                                }
+                            }
+                    }
                 }
-            }
         }
-        return users.toList()
-    }
 
-    @OptIn(ExperimentalSerializationApi::class)
-    private suspend fun getRoomChatWithUser(uid: String): User? {
+    private suspend fun getRoomChatWithUser(uid: String): User? = suspendCoroutine { continuation ->
         try {
-            val user = firebase.collection("accounts").document(uid).get().result
-            return Properties.decodeFromMap<User>(map = user?.data ?: mapOf())
+            firebase.collection("accounts").document(uid).get().addOnSuccessListener {
+                continuation.resume(it.toObject<User>())
+            }
         } catch (e: Exception) {
-            return null
+            continuation.resume(null)
         }
     }
 }

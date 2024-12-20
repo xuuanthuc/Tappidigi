@@ -7,34 +7,33 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.properties.Properties
-import kotlinx.serialization.properties.encodeToMap
 import com.example.wibso.api.Usecase
 import com.example.wibso.models.AccountRoom
 import com.example.wibso.models.Chat
 import com.example.wibso.models.Emoji
 import com.example.wibso.models.Message
+import com.example.wibso.models.MessageDocumentSnapshot
 import com.example.wibso.models.MessageStatus
 import com.example.wibso.models.MessageType
 import com.example.wibso.models.User
 import com.example.wibso.utils.ChatThemes
 import com.example.wibso.utils.GreenPalette
 import com.example.wibso.utils.Status
-import com.google.api.ChangeType
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.DocumentChange
 import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.firestore
-import com.google.firebase.firestore.snapshots
-import kotlinx.serialization.properties.decodeFromMap
+import com.google.firebase.firestore.toObject
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.properties.Properties
+import kotlinx.serialization.properties.encodeToMap
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -82,27 +81,27 @@ class ChatViewModel(groupUsers: List<User>?, sender: User?, receiver: User?) : V
     }
 
     @OptIn(ExperimentalSerializationApi::class)
-    suspend fun sendMessage(content: String, uid: String) {
+    fun sendMessage(content: String, uid: String) {
         if (roomId.value == null || uid.isEmpty()) return
-        val message =
-            Message(
-                content = content,
-                ownerId = uid,
-                messageType = MessageType.TEXT.ordinal,
-                status = mutableStateOf(MessageStatus.SENDING),
-            )
+        val message = Message(
+            content = content,
+            ownerId = uid,
+            messageType = MessageType.TEXT.ordinal,
+            status = mutableStateOf(MessageStatus.SENDING),
+        )
         _messages.value.add(0, message)
         try {
             firebase.collection("chats").document(roomId.value!!).collection("messages")
                 .document(message.id).set(Properties.encodeToMap(message))
         } catch (e: Exception) {
+            println(e)
             message.status.value = MessageStatus.ERROR
         }
     }
 
 
     @OptIn(ExperimentalSerializationApi::class)
-    suspend fun reSendMessage(message: Message) {
+    fun reSendMessage(message: Message) {
         message.status.value = MessageStatus.SENDING;
         try {
             firebase.collection("chats").document(roomId.value!!).collection("messages")
@@ -119,71 +118,78 @@ class ChatViewModel(groupUsers: List<User>?, sender: User?, receiver: User?) : V
         }
     }
 
-    @OptIn(ExperimentalSerializationApi::class)
-    suspend fun checkChatRoomExists(chat: Chat.PrivateChat) {
+    fun checkChatRoomExists(chat: Chat.PrivateChat) {
         var isExists = false
-        val myRooms =
-            firebase.collection("accounts").document(chat.sender.uid!!).collection("chats")
-                .get().result.documents
-        myRooms.forEach {
-            val room = Properties.decodeFromMap<AccountRoom>(it?.data ?: mapOf())
-            if (room.chatWithUid == chat.receiver.uid) {
-                isExists = true
-                _roomId.value = room.roomId
+        firebase.collection("accounts").document(chat.sender.uid!!).collection("chats").get()
+            .addOnSuccessListener {
+                it.documents.forEach { doc ->
+                    val room = doc.toObject<AccountRoom>()
+                    if (room != null) {
+                        if (room.chatWithUid == chat.receiver.uid) {
+                            isExists = true
+                            _roomId.value = room.roomId
+                        }
+                    }
+                }
+                if (isExists && roomId.value != null) {
+                    getMessages(roomId.value!!)
+                } else {
+                    createPrivateChatRoom(chat)
+                }
             }
-        }
-        if (isExists && roomId.value != null) {
-            getMessages(roomId.value!!)
-        } else {
-            createPrivateChatRoom(chat)
-        }
     }
 
     fun onShowingDate(message: Message?) {
         _showingDateId.value = message?.id
     }
 
-    @OptIn(ExperimentalSerializationApi::class)
-    private suspend fun getMessages(roomId: String) {
-        val snapshot =
-            firebase.collection("chats").document(roomId).collection("messages")
-                .orderBy("createdAt").snapshots()
-        snapshot.collect {
-            for (dc in it.documentChanges) {
-                when (dc.type) {
-                    DocumentChange.Type.ADDED -> {
-                        println("ADDED")
-                        val message = Properties.decodeFromMap<Message>(dc.document.data)
-                        val found = findMessage(message.id)
-                        if (found != null) {
-                            found.status.value = MessageStatus.SENT
-                        } else {
-                            message.status.value = MessageStatus.SENT
-                            _messages.value.add(0, message)
+    private fun getMessages(roomId: String) {
+        firebase.collection("chats").document(roomId).collection("messages").orderBy("createdAt")
+            .addSnapshotListener { snapshot, e ->
+                if (e != null) {
+                    return@addSnapshotListener
+                }
+                for (dc in snapshot!!.documentChanges) {
+                    when (dc.type) {
+                        DocumentChange.Type.ADDED -> {
+
+                            val msg = dc.document.toObject<MessageDocumentSnapshot>()
+                            val json = Json.encodeToString(msg)
+                            val message = Json.decodeFromString<Message>(json)
+                            val found = findMessage(message.id)
+                            if (found != null) {
+                                found.status.value = MessageStatus.SENT
+                            } else {
+                                message.status.value = MessageStatus.SENT
+                                _messages.value.add(0, message)
+                            }
+                        }
+
+                        DocumentChange.Type.MODIFIED -> {
+                            println("MODIFIED")
+                            val msg = dc.document.toObject<MessageDocumentSnapshot>()
+                            val json = Json.encodeToString(msg)
+                            val message = Json.decodeFromString<Message>(json)
+                            _messages.value += message
+                        }
+
+                        DocumentChange.Type.REMOVED -> {
+                            println("REMOVED")
+                            val msg = dc.document.toObject<MessageDocumentSnapshot>()
+                            val json = Json.encodeToString(msg)
+                            val message = Json.decodeFromString<Message>(json)
+                            _messages.value -= message
+                        }
+
+                        else -> {
+                            TODO()
                         }
                     }
-
-                    DocumentChange.Type.MODIFIED -> {
-                        println("MODIFIED")
-
-                        _messages.value += Properties.decodeFromMap<Message>(dc.document.data)
-                    }
-
-                    DocumentChange.Type.REMOVED -> {
-                        println("REMOVED")
-
-                        _messages.value -= Properties.decodeFromMap<Message>(dc.document.data)
-                    }
-
-                    else -> {
-                        TODO()
-                    }
+                }
+                if (status.value != Status.LOADED) {
+                    status.value = Status.LOADED
                 }
             }
-            if (status.value != Status.LOADED) {
-                status.value = Status.LOADED
-            }
-        }
     }
 
     @OptIn(ExperimentalSerializationApi::class, ExperimentalUuidApi::class)
@@ -222,7 +228,7 @@ class ChatViewModel(groupUsers: List<User>?, sender: User?, receiver: User?) : V
     }
 
     @OptIn(ExperimentalSerializationApi::class, ExperimentalUuidApi::class)
-    suspend fun createGroupChatRoom() {
+    fun createGroupChatRoom() {
         val chatRoomId = Uuid.random().toString()
 
         groupUsers.value.forEach {

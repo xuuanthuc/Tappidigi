@@ -19,5 +19,5 @@ sealed class Chat {
 @Serializable
 data class AccountRoom(
     val chatWithUid: String? = null,
-    val roomId: String,
+    val roomId: String? = null,
 )

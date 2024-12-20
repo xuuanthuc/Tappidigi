@@ -10,14 +10,25 @@ import kotlin.uuid.Uuid
 
 @Serializable
 data class Message @OptIn(ExperimentalUuidApi::class) constructor(
-    val content: String,
-    val ownerId: String,
-    val messageType: Int,
+    val content: String = "",
+    val ownerId: String = "",
+    val messageType: Int = 0,
     val createdAt: Long = Timestamp.now().seconds,
     val updatedAt: Long = Timestamp.now().seconds,
     val id: String = Uuid.random().toString(),
     @Transient
     var status: MutableState<MessageStatus> = mutableStateOf(MessageStatus.SENDING),
+)
+
+@Serializable
+@OptIn(ExperimentalUuidApi::class)
+data class MessageDocumentSnapshot (
+    val content: String = "",
+    val ownerId: String = "",
+    val messageType: Int = 0,
+    val createdAt: Long = Timestamp.now().seconds,
+    val updatedAt: Long = Timestamp.now().seconds,
+    val id: String = Uuid.random().toString(),
 )
 
 enum class MessageType {

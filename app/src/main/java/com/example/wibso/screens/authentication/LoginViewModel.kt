@@ -14,8 +14,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.properties.Properties
-import kotlinx.serialization.properties.encodeToMap
 import com.example.wibso.models.User
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
@@ -26,6 +24,8 @@ import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.auth
 import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.firestore
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.encodeToJsonElement
 
 class LoginViewModel : ViewModel() {
     private val auth: FirebaseAuth = Firebase.auth
@@ -53,7 +53,7 @@ class LoginViewModel : ViewModel() {
                                 auth.currentUser?.photoUrl.toString(),
                             )
                             firebase.collection("accounts").document(it)
-                                .set(Properties.encodeToMap(user), SetOptions.merge())
+                                .set(Json.encodeToJsonElement(user), SetOptions.merge())
                         } catch (e: Exception) {
                             auth.signOut()
                         }
@@ -74,7 +74,7 @@ class LoginViewModel : ViewModel() {
             .setFilterByAuthorizedAccounts(false)
             .setServerClientId("235044783929-tjdpfrcsmmtvngktft5te1iegj4e71ur.apps.googleusercontent.com")
             .build()
-        val manager =  CredentialManager.create(context as MainActivity)
+        val manager = CredentialManager.create(context as MainActivity)
         println("idToken: com.example.wibso.MainActivity ${context.hashCode()}")
         println("idToken: ${manager.hashCode()}")
         println("idToken: ${googleIdOption}")
@@ -84,7 +84,7 @@ class LoginViewModel : ViewModel() {
         try {
             println("idToken: request ${request.credentialOptions.first().requestData}")
 
-            val credential =  manager.getCredential(
+            val credential = manager.getCredential(
                 request = request,
                 context = context,
             ).credential
