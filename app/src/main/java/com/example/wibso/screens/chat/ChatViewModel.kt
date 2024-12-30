@@ -45,6 +45,10 @@ enum class AlbumState {
     SHOW, HIDE
 }
 
+enum class CameraState {
+    SHOW, HIDE
+}
+
 class ChatViewModel(groupUsers: List<User>?, sender: User?, receiver: User?) : ViewModel() {
     private val firebase = Firebase.firestore
     private val _groupUsers = MutableStateFlow<List<User>>(listOf())
@@ -71,6 +75,8 @@ class ChatViewModel(groupUsers: List<User>?, sender: User?, receiver: User?) : V
     var emojiState: MutableState<EmojiState> = mutableStateOf(EmojiState.HIDE)
 
     var albumState: MutableState<AlbumState> = mutableStateOf(AlbumState.HIDE)
+
+    var cameraState: MutableState<CameraState> = mutableStateOf(CameraState.HIDE)
 
     var isFocused: MutableState<Boolean> = mutableStateOf(false)
 
@@ -242,7 +248,7 @@ class ChatViewModel(groupUsers: List<User>?, sender: User?, receiver: User?) : V
 
     suspend fun getEmojiProvider() {
         if (_emojis.value.isEmpty()) {
-            val emojis = Usecase().getEmojis()
+            val emojis = Usecase().getEmojis() ?: emptyList()
             _emojis.value = emojis
             _groupEmojis.value = emojis.groupBy { it.group }
             println(_emojis.value.size)

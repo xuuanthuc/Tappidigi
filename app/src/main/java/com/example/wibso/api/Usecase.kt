@@ -4,7 +4,7 @@ import io.ktor.http.HttpMethod
 import com.example.wibso.models.Emoji
 
 class Usecase: ApiProvider() {
-    suspend fun getEmojis(): List<Emoji>{
+    suspend fun getEmojis(): List<Emoji>? {
          return request<List<Emoji>>(
             method = HttpMethod.Get,
             url = "emojis",

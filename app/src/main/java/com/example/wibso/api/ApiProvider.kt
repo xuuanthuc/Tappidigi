@@ -37,7 +37,7 @@ open class ApiProvider {
         url: String? = null,
         params: List<Map<String, String>>? = null,
         body: Any? = null,
-    ): T {
+    ): T? {
         try {
             val res = when (method) {
                 HttpMethod.Get -> {
@@ -82,10 +82,12 @@ open class ApiProvider {
                 val withUnknownKeys = Json { ignoreUnknownKeys = true }
                 return withUnknownKeys.decodeFromString<T>(l)
             } else {
-                throw Exception(res.bodyAsText())
+                println(res.bodyAsText())
+                return null
             }
         } catch (e: Exception) {
-            throw e
+            println(e)
+            return null
         }
     }
 }

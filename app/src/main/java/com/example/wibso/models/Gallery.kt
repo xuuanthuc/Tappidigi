@@ -1,5 +1,6 @@
 package com.example.wibso.models
 
+import kotlinx.datetime.Instant
 import java.io.InputStreamReader
 
 internal class SharedFileReader {
@@ -12,14 +13,16 @@ internal class SharedFileReader {
     }
 }
 
-data class GalleryVideo(
+data class GalleryContent(
     val uri: String? = null,
     val name: String? = null,
+    val album: String? = null,
     val duration: Int? = null,
     val size: Int? = null,
+    val type: GalleryType? = null,
+    val createdAt: Instant? = null,
 )
 
-data class GalleryImage(
-    val uri: String? = null,
-    val name: String? = null,
-)
+enum class GalleryType {
+    IMAGE, VIDEO
+}

@@ -47,6 +47,7 @@ import org.koin.compose.koinInject
 import com.example.wibso.models.Chat
 import com.example.wibso.models.MessagePosition
 import com.example.wibso.screens.chat.widgets.AlbumComponent
+import com.example.wibso.screens.chat.widgets.CameraComponent
 import com.example.wibso.screens.chat.widgets.ChatEmojisComponent
 import com.example.wibso.screens.chat.widgets.ChatHeadingComponent
 import com.example.wibso.screens.chat.widgets.MessageComponent
@@ -99,6 +100,7 @@ fun ChatScreen(group: Chat.GroupChat? = null, private: Chat.PrivateChat? = null)
         .background(chatViewModel.theme.value.backgroundColor).pointerInput(Unit) {
             detectTapGestures(onTap = {
                 focusManager.clearFocus()
+                chatViewModel.emojiState.value = EmojiState.HIDE
             })
         }) {
         ChatHeadingComponent(chatViewModel = chatViewModel, private = private)
@@ -185,6 +187,9 @@ fun ChatScreen(group: Chat.GroupChat? = null, private: Chat.PrivateChat? = null)
         ChatEmojisComponent(chatViewModel = chatViewModel, contentController = contentController)
         if (chatViewModel.albumState.value == AlbumState.SHOW) {
             AlbumComponent(chatViewModel = chatViewModel)
+        }
+        if (chatViewModel.cameraState.value == CameraState.SHOW) {
+            CameraComponent(chatViewModel = chatViewModel)
         }
     }
 }

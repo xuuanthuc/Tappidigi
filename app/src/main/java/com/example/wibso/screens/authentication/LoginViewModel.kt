@@ -30,7 +30,6 @@ import kotlinx.serialization.json.encodeToJsonElement
 class LoginViewModel : ViewModel() {
     private val auth: FirebaseAuth = Firebase.auth
 
-    @OptIn(ExperimentalSerializationApi::class)
     fun loginWithGoogle(context: Context, onSuccess: () -> Unit) {
         CoroutineScope(Dispatchers.IO).launch {
             val idToken = getIdToken(context)

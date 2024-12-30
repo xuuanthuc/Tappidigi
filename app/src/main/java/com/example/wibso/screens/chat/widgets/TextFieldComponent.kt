@@ -1,3 +1,5 @@
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.animation.core.tween
@@ -37,14 +39,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.wibso.screens.chat.ActionToolsViewModel
 import xt.qc.tappidigi.R
 import com.example.wibso.screens.chat.AlbumState
+import com.example.wibso.screens.chat.CameraState
 import com.example.wibso.screens.chat.ChatViewModel
 import com.example.wibso.screens.chat.EmojiState
 import com.example.wibso.utils.ColorsPalette
@@ -70,6 +76,42 @@ fun MessageTextField(
     val interactionSource = remember { MutableInteractionSource() }
     val isFocused by interactionSource.collectIsFocusedAsState()
     val toolbarIsShowing = remember { mutableStateOf(true) }
+    val context = LocalContext.current
+    val toolsViewModel = viewModel { ActionToolsViewModel() }
+
+    val albumPermission =
+        rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result ->
+            if (result.containsValue(true)) {
+                CoroutineScope(Dispatchers.Main).launch {
+                    toolsViewModel.fetchImagesFromGallery(context)
+                    toolsViewModel.fetchVideosFromGallery(context)
+                }
+                when (chatViewModel.albumState.value) {
+                    AlbumState.SHOW -> {
+                        chatViewModel.albumState.value = AlbumState.HIDE
+                    }
+
+                    AlbumState.HIDE -> {
+                        chatViewModel.albumState.value = AlbumState.SHOW
+                    }
+                }
+            }
+        }
+
+    val cameraPermission =
+        rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result ->
+            if (result.containsValue(true)) {
+                when (chatViewModel.cameraState.value) {
+                    CameraState.SHOW -> {
+                        chatViewModel.cameraState.value = CameraState.HIDE
+                    }
+
+                    CameraState.HIDE -> {
+                        chatViewModel.cameraState.value = CameraState.SHOW
+                    }
+                }
+            }
+        }
 
     LaunchedEffect(isFocused) {
         chatViewModel.isFocused.value = isFocused
@@ -101,7 +143,9 @@ fun MessageTextField(
     )
 
     Row(
-        modifier = Modifier.background(ColorsPalette.softFern).padding(8.dp),
+        modifier = Modifier
+            .background(ColorsPalette.softFern)
+            .padding(8.dp),
         verticalAlignment = Alignment.Bottom
     ) {
         AnimatedVisibility(
@@ -141,13 +185,18 @@ fun MessageTextField(
             Row {
                 Button(
                     onClick = {
-                        when (chatViewModel.albumState.value) {
-                            AlbumState.SHOW -> {
-                                chatViewModel.albumState.value = AlbumState.HIDE
+                        when (chatViewModel.cameraState.value) {
+                            CameraState.SHOW -> {
+                                chatViewModel.cameraState.value = CameraState.HIDE
                             }
 
-                            AlbumState.HIDE -> {
-                                chatViewModel.albumState.value = AlbumState.SHOW
+                            CameraState.HIDE -> {
+                                if (toolsViewModel.checkCameraPermission(
+                                        context, cameraPermission
+                                    )
+                                ) {
+                                    chatViewModel.cameraState.value = CameraState.SHOW
+                                }
                             }
                         }
                     },
@@ -173,7 +222,9 @@ fun MessageTextField(
                             }
 
                             AlbumState.HIDE -> {
-                                chatViewModel.albumState.value = AlbumState.SHOW
+                                if (toolsViewModel.checkAlbumPermission(context, albumPermission)) {
+                                    chatViewModel.albumState.value = AlbumState.SHOW
+                                }
                             }
                         }
                     },
@@ -229,19 +280,25 @@ fun MessageTextField(
                 toolbarIsShowing.value = false
             },
             maxLines = maxChatLines.value,
-            modifier = Modifier.weight(1f).height(IntrinsicSize.Min).focusRequester(focusRequester),
+            modifier = Modifier
+                .weight(1f)
+                .height(IntrinsicSize.Min)
+                .focusRequester(focusRequester),
             decorationBox = { innerTextField ->
                 Box(
-                    Modifier.fillMaxHeight().background(
-                        color = Color.White, shape = RoundedCornerShape(8.dp)
-                    ), contentAlignment = Alignment.CenterStart
+                    Modifier
+                        .fillMaxHeight()
+                        .background(
+                            color = Color.White, shape = RoundedCornerShape(8.dp)
+                        ), contentAlignment = Alignment.CenterStart
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
 
                         ) {
                         Box(
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier
+                                .weight(1f)
                                 .padding(horizontal = 8.dp, vertical = 4.dp)
                         ) {
                             innerTextField()
