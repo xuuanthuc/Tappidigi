@@ -39,14 +39,13 @@ import com.example.wibso.screens.chat.ChatViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AlbumComponent(chatViewModel: ChatViewModel) {
+fun AlbumComponent(chatViewModel: ChatViewModel, toolsViewModel: ActionToolsViewModel) {
     val sheetState = rememberModalBottomSheetState()
     val context = LocalContext.current
-    val album = viewModel { ActionToolsViewModel() }
 
     val maxWidth = LocalConfiguration.current.screenWidthDp.dp
 
-    val galleryContents = album.data.collectAsState().value
+    val galleryContents = toolsViewModel.data.collectAsState().value
 
     val gridStates = remember {
         LazyGridState()

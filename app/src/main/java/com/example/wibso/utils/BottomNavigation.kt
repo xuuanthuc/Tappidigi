@@ -13,3 +13,8 @@ enum class BottomNavigation(val title: Int, val icon: ImageVector) {
 //    NOTIFICATION(Res.string.notification, Icons.Filled.Notifications),
     PROFILE(R.string.profile , Icons.Filled.Person),
 }
+
+enum class ChatNavigation {
+    MESSAGE,
+    CAMERA
+}

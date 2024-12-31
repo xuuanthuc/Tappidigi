@@ -47,12 +47,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
 import com.example.wibso.screens.chat.ActionToolsViewModel
 import xt.qc.tappidigi.R
 import com.example.wibso.screens.chat.AlbumState
 import com.example.wibso.screens.chat.CameraState
 import com.example.wibso.screens.chat.ChatViewModel
 import com.example.wibso.screens.chat.EmojiState
+import com.example.wibso.utils.ChatNavigation
 import com.example.wibso.utils.ColorsPalette
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
