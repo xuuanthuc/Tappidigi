@@ -1,6 +1,7 @@
 package com.example.wibso.screens.chat
 
 import MessageTextField
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.foundation.background
@@ -37,6 +38,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.wibso.AppViewModel
 import com.example.wibso.models.Chat
 import com.example.wibso.screens.chat.widgets.AlbumComponent
 import com.example.wibso.screens.chat.widgets.CameraComponent
@@ -69,6 +71,8 @@ fun ChatScreen(group: Chat.GroupChat? = null, private: Chat.PrivateChat? = null)
             TextFieldValue()
         )
     }
+    val appViewModel: AppViewModel = koinInject<AppViewModel>()
+
     val messages = chatViewModel.message.collectAsState().value
     val showingDateId = chatViewModel.showingDateId.collectAsState().value
     val focusManager = LocalFocusManager.current
@@ -92,7 +96,15 @@ fun ChatScreen(group: Chat.GroupChat? = null, private: Chat.PrivateChat? = null)
         }
     }
 
-    Box() {
+    BackHandler {
+        if(chatViewModel.cameraState.value == CameraState.SHOW ) {
+            chatViewModel.cameraState.value = CameraState.HIDE
+        } else {
+            appViewModel.navHostController.popBackStack()
+        }
+    }
+
+    Box {
         Column(modifier = Modifier
             .imePadding()
             .safeDrawingPadding()
