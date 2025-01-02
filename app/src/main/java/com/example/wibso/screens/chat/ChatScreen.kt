@@ -2,8 +2,6 @@ package com.example.wibso.screens.chat
 
 import MessageTextField
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.ExperimentalSharedTransitionApi
-import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -34,10 +32,6 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavHostController
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
 import com.example.wibso.AppViewModel
 import com.example.wibso.models.Chat
 import com.example.wibso.screens.chat.widgets.AlbumComponent
@@ -46,7 +40,6 @@ import com.example.wibso.screens.chat.widgets.ChatEmojisComponent
 import com.example.wibso.screens.chat.widgets.ChatHeadingComponent
 import com.example.wibso.screens.chat.widgets.MessageComponent
 import com.example.wibso.screens.profile.ProfileViewModel
-import com.example.wibso.utils.ChatNavigation
 import com.example.wibso.utils.Status
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

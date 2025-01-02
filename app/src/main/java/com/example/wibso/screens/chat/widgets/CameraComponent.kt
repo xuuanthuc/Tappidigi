@@ -1,5 +1,6 @@
 package com.example.wibso.screens.chat.widgets
 
+import android.graphics.Bitmap
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageProxy
@@ -11,6 +12,7 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -30,13 +32,16 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -62,7 +67,7 @@ fun CameraComponent(chatViewModel: ChatViewModel) {
     }
     val lifecycleOwner = LocalLifecycleOwner.current
     var offsetY by remember { mutableFloatStateOf(0f) }
-
+    val bitmap: MutableState<Bitmap?> = remember { mutableStateOf(null) }
     val animatedColor by animateColorAsState(
         targetValue = if (offsetY in -70f..70f) {
             Color.Black
@@ -70,63 +75,152 @@ fun CameraComponent(chatViewModel: ChatViewModel) {
             Color.Transparent
         }, animationSpec = tween(500), label = "color"
     )
-
-    Column(
-        verticalArrangement = Arrangement.Center,
+    Box(
+        contentAlignment = Alignment.Center,
         modifier = Modifier
             .background(animatedColor)
             .fillMaxSize()
     ) {
-        Spacer(modifier = Modifier.height(30.dp))
-        Box(
-            modifier = Modifier
-                .offset {
-                    IntOffset(
-                        0, offsetY.roundToInt()
+        if (bitmap.value == null) {
+            Column(
+                verticalArrangement = Arrangement.Center, modifier = Modifier.fillMaxSize()
+            ) {
+                Spacer(modifier = Modifier.height(30.dp))
+                Box(
+                    modifier = Modifier
+                        .offset {
+                            IntOffset(
+                                0, offsetY.roundToInt()
+                            )
+                        }
+                        .aspectRatio(3f / 4f)
+                        .fillMaxWidth()
+                        .pointerInput(Unit) {
+                            detectDragGestures(onDragStart = {}, onDrag = { change, dragAmount ->
+                                change.consume()
+                                offsetY += dragAmount.y
+
+                            }, onDragEnd = {
+                                if (offsetY in -350f..350f) {
+                                    offsetY = 0f
+                                } else {
+                                    chatViewModel.cameraState.value = CameraState.HIDE
+                                }
+                            })
+                        },
+                ) {
+                    AndroidView(
+                        factory = {
+                            PreviewView(it).apply {
+                                this.scaleType = PreviewView.ScaleType.FIT_CENTER
+                                this.controller = cameraController
+                                cameraController.bindToLifecycle(lifecycleOwner)
+                            }
+                        },
+                        modifier = Modifier.matchParentSize(),
                     )
                 }
-                .aspectRatio(3f / 4f)
-                .fillMaxWidth()
-                .pointerInput(Unit) {
-                    detectDragGestures(onDragStart = {}, onDrag = { change, dragAmount ->
-                        change.consume()
-                        offsetY += dragAmount.y
-
-                    }, onDragEnd = {
-                        if (offsetY in -350f..350f) {
-                            offsetY = 0f
-                        } else {
-                            chatViewModel.cameraState.value = CameraState.HIDE
-                        }
-                    })
-                },
-        ) {
-            AndroidView(
-                factory = {
-                    PreviewView(it).apply {
-                        this.scaleType = PreviewView.ScaleType.FIT_CENTER
-                        this.controller = cameraController
-                        cameraController.bindToLifecycle(lifecycleOwner)
-                    }
-                },
-                modifier = Modifier.matchParentSize(),
-            )
-        }
-        Spacer(modifier = Modifier.height(30.dp))
-        Row(
-            horizontalArrangement = Arrangement.Center,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(66.dp)
-        ) {
-            AnimatedVisibility(
-                visible = offsetY in -70f..70f, enter = fadeIn(), exit = fadeOut()
-            ) {
+                Spacer(modifier = Modifier.height(30.dp))
                 Row(
-                    horizontalArrangement = Arrangement.SpaceEvenly,
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(66.dp)
                 ) {
+                    AnimatedVisibility(
+                        visible = offsetY in -70f..70f, enter = fadeIn(), exit = fadeOut()
+                    ) {
+                        Row(
+                            horizontalArrangement = Arrangement.SpaceEvenly,
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .width(45.dp)
+                                    .height(45.dp)
+                                    .background(
+                                        Color.White.copy(alpha = 0.2f),
+                                        shape = RoundedCornerShape(100.dp)
+                                    )
+                                    .padding(8.dp)
+                                    .pointerInput(Unit) {
+                                        detectTapGestures(onTap = {
+                                            chatViewModel.cameraState.value = CameraState.HIDE
+                                        })
+                                    },
+                            ) {
+                                Icon(
+                                    painter = painterResource(R.drawable.close),
+                                    contentDescription = "",
+                                    tint = Color.White,
+                                )
+                            }
+                            Box(
+                                modifier = Modifier
+                                    .width(66.dp)
+                                    .height(66.dp)
+                                    .border(
+                                        width = 3.dp,
+                                        color = Color.White,
+                                        shape = RoundedCornerShape(100.dp)
+                                    )
+                                    .padding(6.dp)
+                                    .background(Color.White, shape = RoundedCornerShape(100.dp))
+                                    .pointerInput(Unit) {
+                                        detectTapGestures(onTap = {
+                                            cameraController.takePicture(ContextCompat.getMainExecutor(
+                                                context
+                                            ), object : ImageCapture.OnImageCapturedCallback() {
+                                                override fun onCaptureSuccess(image: ImageProxy) {
+                                                    super.onCaptureSuccess(image)
+                                                    bitmap.value = image.toBitmap()
+                                                }
+                                            })
+                                        })
+                                    },
+                            ) {
+
+                            }
+                            Box(modifier = Modifier
+                                .width(45.dp)
+                                .height(45.dp)
+                                .background(
+                                    Color.White.copy(alpha = 0.2f),
+                                    shape = RoundedCornerShape(100.dp)
+                                )
+                                .padding(8.dp)
+                                .pointerInput(Unit) {
+                                    detectTapGestures(onTap = {
+                                        cameraController.cameraSelector =
+                                            if (cameraController.cameraSelector == CameraSelector.DEFAULT_BACK_CAMERA) {
+                                                CameraSelector.DEFAULT_FRONT_CAMERA
+                                            } else {
+                                                CameraSelector.DEFAULT_BACK_CAMERA
+                                            }
+                                    })
+                                }) {
+                                Icon(
+                                    painter = painterResource(R.drawable.rotate),
+                                    contentDescription = "",
+                                    tint = Color.White,
+                                )
+                            }
+                        }
+
+                    }
+                }
+
+            }
+        } else {
+            Column(modifier = Modifier.fillMaxSize()) {
+                Spacer(modifier = Modifier.height(80.dp))
+
+                Image(
+                    bitmap = bitmap.value!!.asImageBitmap(), contentDescription = null
+                )
+
+                Row {
                     Box(
                         modifier = Modifier
                             .width(45.dp)
@@ -136,71 +230,18 @@ fun CameraComponent(chatViewModel: ChatViewModel) {
                             )
                             .padding(8.dp)
                             .pointerInput(Unit) {
-                                detectTapGestures(onTap = {
-                                    chatViewModel.cameraState.value = CameraState.HIDE
-                                })
+                                bitmap.value = null
                             },
+                        contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            painter = painterResource(R.drawable.close),
-                            contentDescription = "",
-                            tint = Color.White,
-                        )
-                    }
-                    Box(
-                        modifier = Modifier
-                            .width(66.dp)
-                            .height(66.dp)
-                            .border(
-                                width = 3.dp,
-                                color = Color.White,
-                                shape = RoundedCornerShape(100.dp)
-                            )
-                            .padding(6.dp)
-                            .background(Color.White, shape = RoundedCornerShape(100.dp)).pointerInput(Unit) {
-                                detectTapGestures(onTap = {
-                                    cameraController.takePicture(
-                                        ContextCompat.getMainExecutor(context),
-                                        object: ImageCapture.OnImageCapturedCallback() {
-                                            override fun onCaptureSuccess(image: ImageProxy) {
-                                                super.onCaptureSuccess(image)
-
-
-                                            }
-                                        }
-                                    )
-                                })
-                            },
-                    ) {
-
-                    }
-                    Box(modifier = Modifier
-                        .width(45.dp)
-                        .height(45.dp)
-                        .background(
-                            Color.White.copy(alpha = 0.2f), shape = RoundedCornerShape(100.dp)
-                        )
-                        .padding(8.dp)
-                        .pointerInput(Unit) {
-                            detectTapGestures(onTap = {
-                                cameraController.cameraSelector =
-                                    if (cameraController.cameraSelector == CameraSelector.DEFAULT_BACK_CAMERA) {
-                                        CameraSelector.DEFAULT_FRONT_CAMERA
-                                    } else {
-                                        CameraSelector.DEFAULT_BACK_CAMERA
-                                    }
-                            })
-                        }) {
-                        Icon(
-                            painter = painterResource(R.drawable.rotate),
+                            painter = painterResource(R.drawable.arrow_right),
                             contentDescription = "",
                             tint = Color.White,
                         )
                     }
                 }
-
             }
         }
-
     }
 }
