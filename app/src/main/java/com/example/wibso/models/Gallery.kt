@@ -1,5 +1,7 @@
 package com.example.wibso.models
 
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
 import kotlinx.datetime.Instant
 import java.io.InputStreamReader
 
@@ -21,6 +23,7 @@ data class GalleryContent(
     val size: Int? = null,
     val type: GalleryType? = null,
     val createdAt: Instant? = null,
+    val isSelected: MutableState<Boolean> = mutableStateOf(false),
 )
 
 enum class GalleryType {

@@ -213,7 +213,7 @@ fun CameraComponent(chatViewModel: ChatViewModel) {
 
             }
         } else {
-            Column(modifier = Modifier.fillMaxSize()) {
+            Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center) {
                 Spacer(modifier = Modifier.height(80.dp))
 
                 Image(
