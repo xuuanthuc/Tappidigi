@@ -1,6 +1,7 @@
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandHorizontally
@@ -31,6 +32,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -47,14 +49,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavHostController
+import com.example.wibso.screens.chat.ActionToolState
 import com.example.wibso.screens.chat.ActionToolsViewModel
 import xt.qc.tappidigi.R
-import com.example.wibso.screens.chat.AlbumState
-import com.example.wibso.screens.chat.CameraState
 import com.example.wibso.screens.chat.ChatViewModel
-import com.example.wibso.screens.chat.EmojiState
-import com.example.wibso.utils.ChatNavigation
 import com.example.wibso.utils.ColorsPalette
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -68,10 +66,13 @@ fun MessageTextField(
     onSend: (String) -> Unit,
 ) {
     var isLabelVisible by remember { mutableStateOf(true) }
-    val maxChatLines = remember { mutableStateOf(1) }
-
+    val maxChatLines = remember { mutableIntStateOf(1) }
+    var isRecordingAudio by remember { mutableStateOf(false) }
     LaunchedEffect(contentController.value.text) {
         isLabelVisible = contentController.value.text.isEmpty()
+    }
+    LaunchedEffect(chatViewModel.actionState.value) {
+        isRecordingAudio = chatViewModel.actionState.value == ActionToolState.AUDIO
     }
     val focusRequester = remember { FocusRequester() }
     val focusManager = LocalFocusManager.current
@@ -88,37 +89,30 @@ fun MessageTextField(
                     toolsViewModel.fetchImagesFromGallery(context)
                     toolsViewModel.fetchVideosFromGallery(context)
                 }
-                when (chatViewModel.albumState.value) {
-                    AlbumState.SHOW -> {
-                        chatViewModel.albumState.value = AlbumState.HIDE
-                    }
+                chatViewModel.actionState.value = ActionToolState.GALLERY
+            }
+        }
 
-                    AlbumState.HIDE -> {
-                        chatViewModel.albumState.value = AlbumState.SHOW
-                    }
-                }
+    val audioPermission =
+        rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result ->
+            if (result.containsValue(true)) {
+                chatViewModel.actionState.value = ActionToolState.AUDIO
+                isLabelVisible = false
+                focusManager.clearFocus()
             }
         }
 
     val cameraPermission =
         rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result ->
             if (result.containsValue(true)) {
-                when (chatViewModel.cameraState.value) {
-                    CameraState.SHOW -> {
-                        chatViewModel.cameraState.value = CameraState.HIDE
-                    }
-
-                    CameraState.HIDE -> {
-                        chatViewModel.cameraState.value = CameraState.SHOW
-                    }
-                }
+                chatViewModel.actionState.value = ActionToolState.CAMERA
             }
         }
 
     LaunchedEffect(isFocused) {
         chatViewModel.isFocused.value = isFocused
         if (isFocused) {
-            chatViewModel.emojiState.value = EmojiState.HIDE
+            chatViewModel.actionState.value = ActionToolState.NONE
         }
         toolbarIsShowing.value = !isFocused
     }
@@ -126,10 +120,10 @@ fun MessageTextField(
     LaunchedEffect(toolbarIsShowing.value) {
         CoroutineScope(Dispatchers.Main).launch {
             if (toolbarIsShowing.value) {
-                maxChatLines.value = 1
+                maxChatLines.intValue = 1
             } else {
                 delay(300)
-                maxChatLines.value = 5
+                maxChatLines.intValue = 5
             }
         }
     }
@@ -137,11 +131,19 @@ fun MessageTextField(
     val animationDuration = 500
     val sentMessageButtonSize by animateIntAsState(
         targetValue = if (isLabelVisible) 0 else 40,
-        animationSpec = tween(durationMillis = animationDuration)
+        animationSpec = tween(durationMillis = animationDuration),
+        label = ""
     )
     val sentMessageButtonMargin by animateIntAsState(
         targetValue = if (isLabelVisible) 0 else 8,
-        animationSpec = tween(durationMillis = animationDuration)
+        animationSpec = tween(durationMillis = animationDuration),
+        label = ""
+    )
+
+    val textFieldBackground by animateColorAsState(
+        targetValue = if (isRecordingAudio) chatViewModel.theme.value.sendButtonColor else Color.White,
+        animationSpec = tween(durationMillis = animationDuration),
+        label = ""
     )
 
     Row(
@@ -151,7 +153,7 @@ fun MessageTextField(
         verticalAlignment = Alignment.Bottom
     ) {
         AnimatedVisibility(
-            visible = !toolbarIsShowing.value,
+            visible = !toolbarIsShowing.value && !isRecordingAudio,
             modifier = Modifier.height(40.dp),
             enter = expandHorizontally(),
             exit = shrinkOut(shrinkTowards = Alignment.CenterEnd)
@@ -176,8 +178,36 @@ fun MessageTextField(
                 )
             }
         }
+
         AnimatedVisibility(
-            visible = toolbarIsShowing.value,
+            visible = isRecordingAudio,
+            modifier = Modifier.height(40.dp),
+            enter = expandHorizontally(),
+            exit = shrinkOut(shrinkTowards = Alignment.CenterEnd)
+        ) {
+            Button(
+                onClick = {
+                    chatViewModel.actionState.value = ActionToolState.NONE
+                    isLabelVisible = contentController.value.text.isEmpty()
+                },
+                modifier = Modifier.size(40.dp),
+                contentPadding = PaddingValues(0.dp),
+                shape = RoundedCornerShape(8.dp),
+                colors = ButtonColors(
+                    containerColor = Color.Transparent,
+                    contentColor = chatViewModel.theme.value.ownerColor,
+                    disabledContainerColor = Color.Gray,
+                    disabledContentColor = Color.Gray
+                )
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.delete), contentDescription = ""
+                )
+            }
+        }
+
+        AnimatedVisibility(
+            visible = toolbarIsShowing.value && !isRecordingAudio,
             modifier = Modifier.height(40.dp),
             enter = expandHorizontally(),
             exit = slideOutHorizontally() + shrinkOut(
@@ -187,18 +217,14 @@ fun MessageTextField(
             Row {
                 Button(
                     onClick = {
-                        when (chatViewModel.cameraState.value) {
-                            CameraState.SHOW -> {
-                                chatViewModel.cameraState.value = CameraState.HIDE
-                            }
-
-                            CameraState.HIDE -> {
-                                if (toolsViewModel.checkCameraPermission(
-                                        context, cameraPermission
-                                    )
-                                ) {
-                                    chatViewModel.cameraState.value = CameraState.SHOW
-                                }
+                        if (chatViewModel.actionState.value != ActionToolState.NONE) {
+                            chatViewModel.actionState.value = ActionToolState.NONE
+                        } else {
+                            if (toolsViewModel.checkCameraPermission(
+                                    context, cameraPermission
+                                )
+                            ) {
+                                chatViewModel.actionState.value = ActionToolState.CAMERA
                             }
                         }
                     },
@@ -218,15 +244,11 @@ fun MessageTextField(
                 }
                 Button(
                     onClick = {
-                        when (chatViewModel.albumState.value) {
-                            AlbumState.SHOW -> {
-                                chatViewModel.albumState.value = AlbumState.HIDE
-                            }
-
-                            AlbumState.HIDE -> {
-                                if (toolsViewModel.checkAlbumPermission(context, albumPermission)) {
-                                    chatViewModel.albumState.value = AlbumState.SHOW
-                                }
+                        if (chatViewModel.actionState.value != ActionToolState.NONE) {
+                            chatViewModel.actionState.value = ActionToolState.NONE
+                        } else {
+                            if (toolsViewModel.checkAlbumPermission(context, albumPermission)) {
+                                chatViewModel.actionState.value = ActionToolState.GALLERY
                             }
                         }
                     },
@@ -246,13 +268,13 @@ fun MessageTextField(
                 }
                 Button(
                     onClick = {
-                        when (chatViewModel.albumState.value) {
-                            AlbumState.SHOW -> {
-                                chatViewModel.albumState.value = AlbumState.HIDE
-                            }
-
-                            AlbumState.HIDE -> {
-                                chatViewModel.albumState.value = AlbumState.SHOW
+                        if (chatViewModel.actionState.value != ActionToolState.NONE) {
+                            chatViewModel.actionState.value = ActionToolState.NONE
+                        } else {
+                            if (toolsViewModel.checkAudioPermission(context, audioPermission)) {
+                                chatViewModel.actionState.value = ActionToolState.AUDIO
+                                isLabelVisible = false
+                                focusManager.clearFocus()
                             }
                         }
                     },
@@ -281,7 +303,8 @@ fun MessageTextField(
                 contentController.value = newValue
                 toolbarIsShowing.value = false
             },
-            maxLines = maxChatLines.value,
+            enabled = chatViewModel.actionState.value != ActionToolState.AUDIO,
+            maxLines = maxChatLines.intValue,
             modifier = Modifier
                 .weight(1f)
                 .height(IntrinsicSize.Min)
@@ -291,7 +314,8 @@ fun MessageTextField(
                     Modifier
                         .fillMaxHeight()
                         .background(
-                            color = Color.White, shape = RoundedCornerShape(8.dp)
+                            textFieldBackground,
+                            shape = RoundedCornerShape(8.dp)
                         ), contentAlignment = Alignment.CenterStart
                 ) {
                     Row(
@@ -303,22 +327,22 @@ fun MessageTextField(
                                 .weight(1f)
                                 .padding(horizontal = 8.dp, vertical = 4.dp)
                         ) {
-                            innerTextField()
+                            if (chatViewModel.actionState.value != ActionToolState.AUDIO) {
+                                innerTextField()
+                            }
                         }
                         Button(
                             onClick = {
                                 CoroutineScope(Dispatchers.Main).launch {
-                                    when (chatViewModel.emojiState.value) {
-                                        EmojiState.SHOW -> {
+                                    if (chatViewModel.actionState.value != ActionToolState.NONE) {
+                                        if (chatViewModel.actionState.value == ActionToolState.EMOJI) {
                                             focusRequester.requestFocus()
-                                            chatViewModel.emojiState.value = EmojiState.HIDE
                                         }
-
-                                        EmojiState.HIDE -> {
-                                            focusManager.clearFocus()
-                                            delay(200)
-                                            chatViewModel.emojiState.value = EmojiState.SHOW
-                                        }
+                                        chatViewModel.actionState.value = ActionToolState.NONE
+                                    } else {
+                                        focusManager.clearFocus()
+                                        delay(200)
+                                        chatViewModel.actionState.value = ActionToolState.EMOJI
                                     }
                                 }
                             },
@@ -334,12 +358,12 @@ fun MessageTextField(
                         ) {
                             Icon(
                                 painter = painterResource(
-                                    when (chatViewModel.emojiState.value) {
-                                        EmojiState.SHOW -> {
+                                    when (chatViewModel.actionState.value) {
+                                        ActionToolState.EMOJI -> {
                                             R.drawable.keyboard
                                         }
 
-                                        EmojiState.HIDE -> {
+                                        else -> {
                                             R.drawable.emoji
                                         }
                                     }
@@ -350,6 +374,14 @@ fun MessageTextField(
                     if (isLabelVisible) {
                         Text(
                             "Type a message...", style = TextStyle(
+                                color = Color.Gray,
+                                fontWeight = FontWeight.W300,
+                            ), modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        )
+                    }
+                    if (isRecordingAudio) {
+                        Text(
+                            "Recording", style = TextStyle(
                                 color = Color.Gray,
                                 fontWeight = FontWeight.W300,
                             ), modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)

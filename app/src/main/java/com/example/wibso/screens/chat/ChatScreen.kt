@@ -90,8 +90,8 @@ fun ChatScreen(group: Chat.GroupChat? = null, private: Chat.PrivateChat? = null)
     }
 
     BackHandler {
-        if(chatViewModel.cameraState.value == CameraState.SHOW ) {
-            chatViewModel.cameraState.value = CameraState.HIDE
+        if(chatViewModel.actionState.value != ActionToolState.NONE ) {
+            chatViewModel.actionState.value = ActionToolState.NONE
         } else {
             appViewModel.navHostController.popBackStack()
         }
@@ -104,8 +104,11 @@ fun ChatScreen(group: Chat.GroupChat? = null, private: Chat.PrivateChat? = null)
             .background(chatViewModel.theme.value.backgroundColor)
             .pointerInput(Unit) {
                 detectTapGestures(onTap = {
+                    if(chatViewModel.actionState.value == ActionToolState.AUDIO) {
+                        return@detectTapGestures
+                    }
                     focusManager.clearFocus()
-                    chatViewModel.emojiState.value = EmojiState.HIDE
+                    chatViewModel.actionState.value = ActionToolState.NONE
                 })
             }) {
             ChatHeadingComponent(chatViewModel = chatViewModel, private = private)
@@ -201,13 +204,13 @@ fun ChatScreen(group: Chat.GroupChat? = null, private: Chat.PrivateChat? = null)
             ChatEmojisComponent(
                 chatViewModel = chatViewModel, contentController = contentController
             )
-            if (chatViewModel.albumState.value == AlbumState.SHOW) {
+            if (chatViewModel.actionState.value == ActionToolState.GALLERY) {
                 AlbumComponent(
                     chatViewModel = chatViewModel, toolsViewModel = toolsViewModel
                 )
             }
         }
-        if (chatViewModel.cameraState.value == CameraState.SHOW) {
+        if (chatViewModel.actionState.value == ActionToolState.CAMERA) {
             CameraComponent(chatViewModel = chatViewModel)
         }
     }

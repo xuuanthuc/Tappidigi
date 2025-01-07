@@ -37,16 +37,12 @@ import kotlinx.serialization.properties.encodeToMap
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
-enum class EmojiState {
-    SHOW, HIDE
-}
-
-enum class AlbumState {
-    SHOW, HIDE
-}
-
-enum class CameraState {
-    SHOW, HIDE
+enum class ActionToolState {
+    AUDIO,
+    CAMERA,
+    GALLERY,
+    EMOJI,
+    NONE,
 }
 
 class ChatViewModel(groupUsers: List<User>?, sender: User?, receiver: User?) : ViewModel() {
@@ -72,11 +68,7 @@ class ChatViewModel(groupUsers: List<User>?, sender: User?, receiver: User?) : V
 
     val theme: MutableState<ChatThemes> = mutableStateOf(GreenPalette)
 
-    var emojiState: MutableState<EmojiState> = mutableStateOf(EmojiState.HIDE)
-
-    var albumState: MutableState<AlbumState> = mutableStateOf(AlbumState.HIDE)
-
-    var cameraState: MutableState<CameraState> = mutableStateOf(CameraState.HIDE)
+    var actionState: MutableState<ActionToolState> = mutableStateOf(ActionToolState.NONE)
 
     var isFocused: MutableState<Boolean> = mutableStateOf(false)
 

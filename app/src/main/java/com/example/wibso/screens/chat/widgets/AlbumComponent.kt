@@ -50,8 +50,8 @@ import coil3.video.VideoFrameDecoder
 import coil3.video.videoFrameMillis
 import com.example.wibso.models.GalleryContent
 import com.example.wibso.models.GalleryType
+import com.example.wibso.screens.chat.ActionToolState
 import com.example.wibso.screens.chat.ActionToolsViewModel
-import com.example.wibso.screens.chat.AlbumState
 import com.example.wibso.screens.chat.ChatViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -73,7 +73,7 @@ fun AlbumComponent(chatViewModel: ChatViewModel, toolsViewModel: ActionToolsView
 
     ModalBottomSheet(
         onDismissRequest = {
-            chatViewModel.albumState.value = AlbumState.HIDE
+            chatViewModel.actionState.value = ActionToolState.NONE
         },
         sheetState = sheetState,
         shape = RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp),

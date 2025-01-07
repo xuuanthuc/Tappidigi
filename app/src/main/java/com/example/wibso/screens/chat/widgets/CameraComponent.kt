@@ -50,7 +50,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import com.example.wibso.screens.chat.CameraState
+import com.example.wibso.screens.chat.ActionToolState
 import com.example.wibso.screens.chat.ChatViewModel
 import xt.qc.tappidigi.R
 import kotlin.math.roundToInt
@@ -104,7 +104,7 @@ fun CameraComponent(chatViewModel: ChatViewModel) {
                                 if (offsetY in -350f..350f) {
                                     offsetY = 0f
                                 } else {
-                                    chatViewModel.cameraState.value = CameraState.HIDE
+                                    chatViewModel.actionState.value = ActionToolState.NONE
                                 }
                             })
                         },
@@ -146,7 +146,7 @@ fun CameraComponent(chatViewModel: ChatViewModel) {
                                     .padding(8.dp)
                                     .pointerInput(Unit) {
                                         detectTapGestures(onTap = {
-                                            chatViewModel.cameraState.value = CameraState.HIDE
+                                            chatViewModel.actionState.value = ActionToolState.NONE
                                         })
                                     },
                             ) {

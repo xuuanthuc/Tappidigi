@@ -49,6 +49,25 @@ class ActionToolsViewModel : ViewModel() {
         }
     }
 
+    fun checkAudioPermission(
+        context: Context,
+        permission: ManagedActivityResultLauncher<Array<String>, Map<String, @JvmSuppressWildcards Boolean>>
+    ): Boolean {
+        val audioPermissions = arrayOf(
+            RECORD_AUDIO
+        )
+        val hasRequiredPermissions = audioPermissions.all {
+            ContextCompat.checkSelfPermission(context, it) == PERMISSION_GRANTED
+        }
+        if (hasRequiredPermissions) {
+            return true
+        } else {
+            permission.launch(audioPermissions)
+            return false
+        }
+    }
+
+
     @SuppressLint("RestrictedApi", "CoroutineCreationDuringComposition")
     fun checkAlbumPermission(
         context: Context,

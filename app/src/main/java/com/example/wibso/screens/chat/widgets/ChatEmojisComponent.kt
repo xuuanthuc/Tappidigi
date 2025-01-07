@@ -3,7 +3,6 @@ package com.example.wibso.screens.chat.widgets
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
@@ -42,10 +41,10 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.wibso.screens.chat.ActionToolState
 import xt.qc.tappidigi.R
 import kotlinx.coroutines.launch
 import com.example.wibso.screens.chat.ChatViewModel
-import com.example.wibso.screens.chat.EmojiState
 import com.example.wibso.utils.removeLastChar
 
 @Composable
@@ -56,7 +55,7 @@ fun ChatEmojisComponent(
     val scope = rememberCoroutineScope()
 
     val animatedSize by animateDpAsState(
-        targetValue = if (chatViewModel.emojiState.value == EmojiState.SHOW) 300.dp else 0.dp,
+        targetValue = if (chatViewModel.actionState.value == ActionToolState.EMOJI) 300.dp else 0.dp,
         animationSpec = tween(
             durationMillis = 0, easing = LinearEasing
         ), label = ""
@@ -69,7 +68,7 @@ fun ChatEmojisComponent(
             .padding(8.dp)
     ) {
         if (groups == null) {
-            if (chatViewModel.emojiState.value == EmojiState.SHOW) Box(
+            if (chatViewModel.actionState.value == ActionToolState.EMOJI) Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier.fillMaxSize()
             ) {
@@ -135,7 +134,7 @@ fun ChatEmojisComponent(
                     )
                 }
             }
-            if (chatViewModel.emojiState.value == EmojiState.SHOW) LazyRow {
+            if (chatViewModel.actionState.value == ActionToolState.EMOJI) LazyRow {
                 items(groups.size) { index ->
                     Text(
                         groups.keys.elementAt(index),
