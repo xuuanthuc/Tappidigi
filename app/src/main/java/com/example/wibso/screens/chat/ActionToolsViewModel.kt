@@ -9,27 +9,37 @@ import android.Manifest.permission.RECORD_AUDIO
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager.PERMISSION_GRANTED
+import android.media.AudioManager
+import android.media.MediaRecorder
+import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
 import androidx.activity.compose.ManagedActivityResultLauncher
+import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import com.example.wibso.models.GalleryContent
 import com.example.wibso.models.GalleryType
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.Instant
+import java.io.File
+import java.io.FileOutputStream
 
 class ActionToolsViewModel : ViewModel() {
 
     private val _data = MutableStateFlow<List<GalleryContent>>(emptyList())
     val data: StateFlow<List<GalleryContent>> = _data.asStateFlow()
 
+    private var mediaRecorder: MediaRecorder? = null
+
+    var cacheAudio: File? = null
 
     fun checkCameraPermission(
         context: Context,
@@ -65,6 +75,36 @@ class ActionToolsViewModel : ViewModel() {
             permission.launch(audioPermissions)
             return false
         }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.S)
+    fun initRecorder(context: Context): MediaRecorder {
+        mediaRecorder = MediaRecorder(context)
+        return mediaRecorder as MediaRecorder
+    }
+
+    @RequiresApi(Build.VERSION_CODES.S)
+    fun recordAudio(context: Context) {
+        cacheAudio = File(context.cacheDir, "audio.mp3")
+        initRecorder(context).apply {
+            setAudioSource(MediaRecorder.AudioSource.MIC)
+            setOutputFormat(MediaRecorder.OutputFormat.MPEG_2_TS)
+            setOutputFile(FileOutputStream(cacheAudio).fd)
+            setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+            prepare()
+            start()
+        }
+    }
+
+    fun stopRecord() {
+        mediaRecorder?.stop()
+        mediaRecorder?.release()
+        println(cacheAudio?.path)
+    }
+
+    fun play() {
+        mediaRecorder?.stop()
+        mediaRecorder?.reset()
     }
 
 

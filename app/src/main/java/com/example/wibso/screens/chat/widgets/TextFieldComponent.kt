@@ -1,5 +1,8 @@
+import android.media.MediaRecorder
+import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateIntAsState
@@ -58,7 +61,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.io.File
 
+@RequiresApi(Build.VERSION_CODES.S)
 @Composable
 fun MessageTextField(
     chatViewModel: ChatViewModel,
@@ -99,6 +104,7 @@ fun MessageTextField(
                 chatViewModel.actionState.value = ActionToolState.AUDIO
                 isLabelVisible = false
                 focusManager.clearFocus()
+                toolsViewModel.recordAudio(context)
             }
         }
 
@@ -189,6 +195,7 @@ fun MessageTextField(
                 onClick = {
                     chatViewModel.actionState.value = ActionToolState.NONE
                     isLabelVisible = contentController.value.text.isEmpty()
+                    toolsViewModel.stopRecord()
                 },
                 modifier = Modifier.size(40.dp),
                 contentPadding = PaddingValues(0.dp),
@@ -275,6 +282,7 @@ fun MessageTextField(
                                 chatViewModel.actionState.value = ActionToolState.AUDIO
                                 isLabelVisible = false
                                 focusManager.clearFocus()
+                                toolsViewModel.recordAudio(context)
                             }
                         }
                     },
