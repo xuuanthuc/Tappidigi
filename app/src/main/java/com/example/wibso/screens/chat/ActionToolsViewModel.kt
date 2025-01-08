@@ -9,7 +9,6 @@ import android.Manifest.permission.RECORD_AUDIO
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager.PERMISSION_GRANTED
-import android.media.AudioManager
 import android.media.MediaRecorder
 import android.net.Uri
 import android.os.Build
@@ -18,11 +17,12 @@ import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
+import androidx.media3.common.MediaItem
+import androidx.media3.exoplayer.ExoPlayer
 import com.example.wibso.models.GalleryContent
 import com.example.wibso.models.GalleryType
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -38,8 +38,9 @@ class ActionToolsViewModel : ViewModel() {
     val data: StateFlow<List<GalleryContent>> = _data.asStateFlow()
 
     private var mediaRecorder: MediaRecorder? = null
+    private var exoPlayer: ExoPlayer? = null
 
-    var cacheAudio: File? = null
+    private var cacheAudio: File? = null
 
     fun checkCameraPermission(
         context: Context,
@@ -78,9 +79,12 @@ class ActionToolsViewModel : ViewModel() {
     }
 
     @RequiresApi(Build.VERSION_CODES.S)
-    fun initRecorder(context: Context): MediaRecorder {
-        mediaRecorder = MediaRecorder(context)
-        return mediaRecorder as MediaRecorder
+    private fun initRecorder(context: Context): MediaRecorder {
+        return mediaRecorder ?: MediaRecorder(context)
+    }
+
+    private fun initPlayer(context: Context): ExoPlayer {
+        return exoPlayer ?: ExoPlayer.Builder(context).build()
     }
 
     @RequiresApi(Build.VERSION_CODES.S)
@@ -102,9 +106,10 @@ class ActionToolsViewModel : ViewModel() {
         println(cacheAudio?.path)
     }
 
-    fun play() {
-        mediaRecorder?.stop()
-        mediaRecorder?.reset()
+    fun play(context: Context) {
+        initPlayer(context).setMediaItem(MediaItem.fromUri(Uri.fromFile(cacheAudio)))
+        exoPlayer?.prepare()
+        exoPlayer?.play()
     }
 
 
