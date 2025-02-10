@@ -3,6 +3,7 @@ agp = "8.7.3"
 camera = "1.4.1"
 coil = "3.0.4"
 firebaseBomVersion = "33.7.0"
+firebaseStorageKtx = "21.0.1"
 koinAndroidxCompose = "3.5.0"
 kotlin = "2.0.20"
 coreKtx = "1.15.0"
@@ -40,6 +41,7 @@ firebase-analytics = { module = "com.google.firebase:firebase-analytics" }
 firebase-auth = { module = "com.google.firebase:firebase-auth" }
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBomVersion" }
 firebase-firestore = { module = "com.google.firebase:firebase-firestore" }
+firebase-storage-ktx = { module = "com.google.firebase:firebase-storage-ktx", version.ref = "firebaseStorageKtx" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }

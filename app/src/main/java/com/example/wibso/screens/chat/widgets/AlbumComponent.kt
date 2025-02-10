@@ -4,15 +4,14 @@ import android.net.Uri
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -21,6 +20,7 @@ import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -30,7 +30,6 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
@@ -40,6 +39,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -53,6 +53,10 @@ import com.example.wibso.models.GalleryType
 import com.example.wibso.screens.chat.ActionToolState
 import com.example.wibso.screens.chat.ActionToolsViewModel
 import com.example.wibso.screens.chat.ChatViewModel
+import com.example.wibso.utils.ChatGalleryStyle
+import com.example.wibso.utils.ItemGalleryStyle
+import com.example.wibso.utils.PostGalleryStyle
+import xt.qc.tappidigi.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -100,7 +104,81 @@ fun AlbumComponent(chatViewModel: ChatViewModel, toolsViewModel: ActionToolsView
                     val content = galleryContents[index]
                     ItemGallery(
                         content = content,
-                        chatViewModel = chatViewModel,
+                        style = ChatGalleryStyle(),
+                        selectionList = selectionList
+                    )
+                }
+            }
+            Box {
+                Text("send")
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun GalleryComponent(
+    onDismissRequest: () -> Unit,
+    toolsViewModel: ActionToolsViewModel,
+    onPick: (SnapshotStateList<GalleryContent>) -> Unit
+) {
+    val sheetState = rememberModalBottomSheetState()
+
+    ///Ban đầu sử dụng MutableList<> nhưng khi item trong list được thêm vào hoặc xoá bớt đi thì các
+    // item con không lắng nghe được sự thay đổi, sau khi sử dụng SnapshotStateList
+    // thì giải quyết được vấn đề này để cập nhật lại index
+
+    val selectionList: SnapshotStateList<GalleryContent> = remember { mutableStateListOf() }
+
+    val galleryContents = toolsViewModel.data.collectAsState().value
+
+    val gridStates = remember {
+        LazyGridState()
+    }
+
+    ModalBottomSheet(
+        onDismissRequest = onDismissRequest,
+        sheetState = sheetState,
+        shape = RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp),
+        scrimColor = Color.Transparent,
+        containerColor = Color.White,
+        dragHandle = {
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Spacer(modifier = Modifier.weight(1f))
+                Box {
+                    Text("Recent")
+                }
+                Spacer(modifier = Modifier.weight(1f))
+                Box(
+                    modifier = Modifier
+                        .clickable {
+                            onPick(selectionList)
+                            onDismissRequest()
+                        }
+                        .padding(16.dp)
+                ) {
+                    Icon(painter = painterResource(R.drawable.send), contentDescription = "")
+                }
+            }
+
+        },
+    ) {
+        Column {
+            LazyVerticalGrid(
+                columns = GridCells.Adaptive(minSize = 80.dp),
+                modifier = Modifier.weight(1f),
+                state = gridStates,
+                horizontalArrangement = Arrangement.spacedBy(2.dp),
+                verticalArrangement = Arrangement.spacedBy(2.dp),
+            ) {
+                items(galleryContents.size) { index ->
+                    val content = galleryContents[index]
+                    ItemGallery(
+                        content = content,
+                        style = PostGalleryStyle(),
                         selectionList = selectionList
                     )
                 }
@@ -115,7 +193,7 @@ fun AlbumComponent(chatViewModel: ChatViewModel, toolsViewModel: ActionToolsView
 @Composable
 fun ItemGallery(
     content: GalleryContent,
-    chatViewModel: ChatViewModel,
+    style: ItemGalleryStyle,
     selectionList: MutableList<GalleryContent>
 ) {
     val context = LocalContext.current
@@ -174,7 +252,7 @@ fun ItemGallery(
             Box(
                 modifier = Modifier
                     .matchParentSize()
-                    .border(width = 2.dp, color = chatViewModel.theme.value.ownerColor)
+                    .border(width = 2.dp, color = style.color)
                     .background(Color.Black.copy(alpha = 0.3f)), contentAlignment = Alignment.TopEnd
             ) {
                 Box(
@@ -182,7 +260,7 @@ fun ItemGallery(
                         .width(20.dp)
                         .height(20.dp)
                         .background(
-                            color = chatViewModel.theme.value.ownerColor,
+                            color = style.color,
                             shape = RoundedCornerShape(2.dp)
                         ), contentAlignment = Alignment.Center
                 ) {

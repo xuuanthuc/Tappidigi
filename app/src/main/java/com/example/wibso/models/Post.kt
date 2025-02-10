@@ -7,5 +7,13 @@ import kotlin.uuid.Uuid
 @Serializable
 data class Post @OptIn(ExperimentalUuidApi::class) constructor(
     val id: String = Uuid.random().toString(),
-    val content: String? = null,
+    val title: String? = null,
+    val description: String? = null,
+    var media: Media? = null,
+)
+
+@Serializable
+data class Media @OptIn(ExperimentalUuidApi::class) constructor(
+    val type: GalleryType? = null,
+    var url: String? = null,
 )
