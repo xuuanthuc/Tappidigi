@@ -21,6 +21,7 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.properties.Properties
 import kotlinx.serialization.properties.encodeToMap
+import java.io.File
 
 class CreateViewModel : ViewModel() {
     private val storage = FirebaseStorage.getInstance("gs://tappidigi.firebasestorage.app")
@@ -40,7 +41,7 @@ class CreateViewModel : ViewModel() {
             if (galleryContents.isEmpty()) return@launch
             val content = galleryContents.first()
             uploadImageToFirebaseStorage(
-                Uri.parse(content.uri),
+                Uri.fromFile(content.uri?.let { File(it) }),
                 object : UploadCallback {
                     override fun onSuccess(downloadUrl: Uri) {
                         post.media = Media(type = content.type, url = downloadUrl.path)
