@@ -6,6 +6,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.ViewModel
 import com.example.wibso.models.GalleryContent
+import com.example.wibso.models.GalleryType
 import com.example.wibso.models.Media
 import com.example.wibso.models.Post
 import com.example.wibso.models.User
@@ -18,10 +19,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.properties.Properties
 import kotlinx.serialization.properties.encodeToMap
 import java.io.File
+import java.util.ArrayList
 
 class CreateViewModel : ViewModel() {
     private val storage = FirebaseStorage.getInstance("gs://tappidigi.firebasestorage.app")
@@ -37,53 +40,57 @@ class CreateViewModel : ViewModel() {
         val firebase = Firebase.firestore
         val post = Post(title = title, description = description)
         if (user?.uid == null) return
-        CoroutineScope(Dispatchers.IO).launch {
-            if (galleryContents.isEmpty()) return@launch
-            val content = galleryContents.first()
-            uploadImageToFirebaseStorage(
-                Uri.fromFile(content.uri?.let { File(it) }),
-                object : UploadCallback {
-                    override fun onSuccess(downloadUrl: Uri) {
-                        post.media = Media(type = content.type, url = downloadUrl.path)
-                        firebase.collection("posts").document(post.id)
-                            .set(Properties.encodeToMap(post))
-                        firebase.collection("accounts").document(user.uid).collection("posts")
-                            .document(post.id)
-                            .set(hashMapOf<String, String>())
-                        cancel()
-                    }
+        if (galleryContents.isEmpty()) return
 
-                    override fun onFailure(exception: Exception) {
-                        println("Failed to upload image: ${exception.message}")
-                    }
-                },
-            )
+        val uris = galleryContents.mapNotNull { it.uri?.let { uri -> Uri.fromFile(File(uri)) } }
+        val uriArrayList = ArrayList(uris)
+        uploadImagesToFirebaseStorage(uriArrayList, object : UploadCallback {
+            override fun onSuccess(downloadUrls: ArrayList<Uri>) {
+                CoroutineScope(Dispatchers.IO).launch {
+                    post.medias =
+                        downloadUrls.map {
+                            Media(
+                                type = GalleryType.IMAGE.toString(),
+                                url = it.toString()
+                            )
+                        } as ArrayList<Media>
+                    val postMap = post.toMap()
+                    firebase.collection("posts").document(post.id)
+                        .set(postMap)
+                    firebase.collection("accounts").document(user.uid).collection("posts")
+                        .document(post.id)
+                        .set(hashMapOf<String, String>())
+                    cancel()
+                }
+            }
 
-        }
+            override fun onFailure(exception: Exception) {
+                println("Failed to upload images: ${exception.message}")
+            }
+        })
     }
 
-    private fun uploadImageToFirebaseStorage(uri: Uri, callback: UploadCallback) {
-        val storageRef: StorageReference = storage.reference
+    private fun uploadImagesToFirebaseStorage(uris: ArrayList<Uri>, callback: UploadCallback) {
+        CoroutineScope(Dispatchers.IO).launch {
+            val storageRef: StorageReference = storage.reference
+            val downloadUrls = ArrayList<Uri>()
 
-        // Create a reference to the image you want to upload
-        val imageRef = storageRef.child("images/${System.currentTimeMillis()}.jpg")
-
-        // Upload the image
-        val uploadTask = imageRef.putFile(uri)
-        uploadTask.addOnSuccessListener {
-            // Get the download URL after successful upload
-            imageRef.downloadUrl.addOnSuccessListener { downloadUrl ->
-                println("Image uploaded successfully. Download URL: $downloadUrl")
-                callback.onSuccess(downloadUrl)
+            try {
+                uris.forEach { uri ->
+                    val imageRef = storageRef.child("images/${System.currentTimeMillis()}.jpg")
+                    imageRef.putFile(uri).await()
+                    val downloadUrl = imageRef.downloadUrl.await()
+                    downloadUrls.add(downloadUrl)
+                }
+                callback.onSuccess(downloadUrls)
+            } catch (exception: Exception) {
+                callback.onFailure(exception)
             }
-        }.addOnFailureListener { exception ->
-            callback.onFailure(exception)
         }
-
     }
 }
 
 interface UploadCallback {
-    fun onSuccess(downloadUrl: Uri)
+    fun onSuccess(downloadUrls: ArrayList<Uri>)
     fun onFailure(exception: Exception)
 }

@@ -1,6 +1,7 @@
 package com.example.wibso.screens.create
 
 import android.net.Uri
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -12,9 +13,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyGridState
-import androidx.compose.foundation.lazy.grid.LazyHorizontalGrid
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
@@ -32,8 +32,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -78,156 +78,186 @@ fun CreateScreen() {
             }
         }
     val images: SnapshotStateList<GalleryContent> = remember { mutableStateListOf() }
-    val gridStates = remember {
-        LazyGridState()
-    }
-    val maxWidth = LocalConfiguration.current.screenWidthDp.dp
-    Column(
-        horizontalAlignment = Alignment.Start,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp)
-    ) {
-        Text(
-            "Share with your friends",
-            modifier = Modifier.padding(bottom = 10.dp),
-            style = MaterialTheme.typography.titleLarge.copy(
-                fontWeight = FontWeight.Bold,
-            )
-        )
-        OutlinedTextField(
-            value = titleTextController.value,
-            onValueChange = { titleTextController.value = it },
-            label = { Text("Title") },
-            shape = RoundedCornerShape(12.dp),
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 16.dp)
+    val keyboardController = LocalSoftwareKeyboardController.current
 
-        )
-        OutlinedTextField(
-            value = descriptionTextController.value,
-            onValueChange = { descriptionTextController.value = it },
-            label = { Text("Description") },
-            shape = RoundedCornerShape(12.dp),
+    Box {
+        LazyColumn(
+            horizontalAlignment = Alignment.Start,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 16.dp)
-                .height(150.dp),
-            maxLines = 5
-        )
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 16.dp)
-                .size(180.dp)
-                .background(
-                    color = Color.LightGray, shape = RoundedCornerShape(12.dp)
-                )
-                .clickable {
-                    if (createViewModel.actionState.value != ActionToolState.NONE) {
-                        createViewModel.actionState.value = ActionToolState.NONE
-                    } else {
-                        if (toolsViewModel.checkAlbumPermission(context, albumPermission)) {
-                            createViewModel.actionState.value = ActionToolState.GALLERY
-                        }
-                    }
-
-                }, contentAlignment = Alignment.Center
+                .padding(horizontal = 16.dp)
         ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.album),
-                    contentDescription = "",
-                    modifier = Modifier.size(40.dp)
-
-                )
+            item {
                 Text(
-                    "Add Image",
-                    style = MaterialTheme.typography.titleMedium,
+                    "Share with your friends",
+                    modifier = Modifier.padding(bottom = 10.dp),
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontWeight = FontWeight.Bold,
+                    )
                 )
             }
-        }
+            item {
+                OutlinedTextField(
+                    value = titleTextController.value,
+                    onValueChange = { titleTextController.value = it },
+                    label = { Text("Title") },
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp),
+                    maxLines = 1
+                )
+            }
+            item {
 
-        LazyHorizontalGrid(
-            rows = GridCells.Adaptive(minSize = 80.dp),
-            modifier = Modifier.weight(1f),
-            state = gridStates,
-            horizontalArrangement = Arrangement.spacedBy(2.dp),
-            verticalArrangement = Arrangement.spacedBy(2.dp),
-        ) {
-            items(images.size) { index ->
-                val content = images[index]
-                val model = ImageRequest.Builder(context).data(content.uri).videoFrameMillis(10000)
-                    .decoderFactory { result, options, _ ->
-                        VideoFrameDecoder(
-                            result.source, options
-                        )
-                    }.build()
+                OutlinedTextField(
+                    value = descriptionTextController.value,
+                    onValueChange = { descriptionTextController.value = it },
+                    label = { Text("Description") },
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp)
+                        .height(150.dp),
+                    maxLines = 5
+                )
+            }
+            item {
                 Box(
-                    contentAlignment = Alignment.BottomEnd,
-                    modifier = Modifier.pointerInput(content) {
-                    }) {
-                    AsyncImage(
-                        model = if (content.type == GalleryType.IMAGE) Uri.parse(content.uri) else model,
-                        contentDescription = null,
-                        modifier = Modifier.size(maxWidth / 4),
-                        contentScale = ContentScale.Crop
-                    )
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp)
+                        .size(180.dp)
+                        .background(
+                            color = Color.LightGray, shape = RoundedCornerShape(12.dp)
+                        )
+                        .clickable {
+                            if (createViewModel.actionState.value != ActionToolState.NONE) {
+                                createViewModel.actionState.value = ActionToolState.NONE
+                            } else {
+                                if (toolsViewModel.checkAlbumPermission(context, albumPermission)) {
+                                    createViewModel.actionState.value = ActionToolState.GALLERY
+                                }
+                            }
 
-                    if (content.type == GalleryType.VIDEO && content.duration != null) {
+                        }, contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.album),
+                            contentDescription = "",
+                            modifier = Modifier.size(40.dp)
+
+                        )
+                        Text(
+                            "Add Image",
+                            style = MaterialTheme.typography.titleMedium,
+                        )
+                    }
+                }
+            }
+
+            if (images.isNotEmpty()) item {
+                LazyRow(
+                    modifier = Modifier
+                        .padding(bottom = 16.dp)
+                        .height(128.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                ) {
+                    items(images.size) { index ->
+                        val content = images[index]
+                        val model =
+                            ImageRequest.Builder(context).data(content.uri)
+                                .videoFrameMillis(10000)
+                                .decoderFactory { result, options, _ ->
+                                    VideoFrameDecoder(
+                                        result.source, options
+                                    )
+                                }.build()
                         Box(
-                            modifier = Modifier
-                                .padding(4.dp)
-                                .background(
-                                    Color.Black.copy(alpha = 0.5f), shape = RoundedCornerShape(2.dp)
-                                )
-                                .padding(2.dp)
-                        ) {
-                            Text(
-                                (content.duration.div(1000)).secToTime(), style = TextStyle(
-                                    color = Color.White, fontSize = 10.sp
-                                )
+                            contentAlignment = Alignment.BottomEnd,
+                            modifier = Modifier.pointerInput(content) {
+                            }) {
+                            AsyncImage(
+                                model = if (content.type == GalleryType.IMAGE) Uri.parse(content.uri) else model,
+                                contentDescription = null,
+                                contentScale = ContentScale.Crop
                             )
+
+                            if (content.type == GalleryType.VIDEO && content.duration != null) {
+                                Box(
+                                    modifier = Modifier
+                                        .padding(4.dp)
+                                        .background(
+                                            Color.Black.copy(alpha = 0.5f),
+                                            shape = RoundedCornerShape(2.dp)
+                                        )
+                                        .padding(2.dp)
+                                ) {
+                                    Text(
+                                        (content.duration.div(1000)).secToTime(),
+                                        style = TextStyle(
+                                            color = Color.White, fontSize = 10.sp
+                                        )
+                                    )
+                                }
+                            }
                         }
                     }
                 }
             }
-        }
+            item {
+                Button(
+                    onClick = {
+                        val title = titleTextController.value.text.trim()
+                        val description = descriptionTextController.value.text.trim()
 
-        Button(
-            onClick = {
-                createViewModel.createPost(
-                    titleTextController.value.text,
-                    descriptionTextController.value.text,
-                    profileViewModel.userState.value,
-                    galleryContents = images
+                        if (title.isBlank() || description.isBlank()) {
+                            Toast.makeText(
+                                context,
+                                "Title and description cannot be empty",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        } else {
+                            createViewModel.createPost(
+                                title,
+                                description,
+                                profileViewModel.userState.value,
+                                galleryContents = images
+                            )
+                            keyboardController?.hide()
+                            titleTextController.value = TextFieldValue("")
+                            descriptionTextController.value = TextFieldValue("")
+                            images.clear()
+                        }
+                    },
+                    modifier = Modifier
+                        .padding(bottom = 20.dp)
+                        .fillMaxWidth()
+                        .height(50.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    content = {
+                        Text("Save", style = MaterialTheme.typography.titleMedium)
+                    },
+                )
+            }
+        }
+    }
+    if (createViewModel.actionState.value == ActionToolState.GALLERY) {
+        GalleryComponent(
+            onDismissRequest = {
+                createViewModel.actionState.value = ActionToolState.NONE
+            },
+            toolsViewModel = toolsViewModel,
+            onPick = { pickedImages ->
+                images.addAll(
+                    pickedImages
                 )
             },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(50.dp),
-            shape = RoundedCornerShape(12.dp),
-            content = {
-                Text("Save", style = MaterialTheme.typography.titleMedium)
-            },
         )
-        if (createViewModel.actionState.value == ActionToolState.GALLERY) {
-            GalleryComponent(
-                onDismissRequest = {
-                    createViewModel.actionState.value = ActionToolState.NONE
-                },
-                toolsViewModel = toolsViewModel,
-                onPick = { pickedImages ->
-                    images.addAll(
-                        pickedImages
-                    )
-                },
-            )
-        }
     }
 }
