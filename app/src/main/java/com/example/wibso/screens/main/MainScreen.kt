@@ -48,9 +48,6 @@ fun MainScreen() {
     val navController: NavHostController = rememberNavController()
 
     Scaffold(
-        topBar = {
-            Box(modifier = Modifier.height(200.dp).fillMaxWidth().background(Color.Red))
-        },
         bottomBar = {
             Row(
                 verticalAlignment = Alignment.CenterVertically,

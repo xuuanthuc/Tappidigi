@@ -53,7 +53,7 @@ fun HomeScreen() {
       ) {
 
          composable("home") {
-            HomeScreenss(
+            HomeScreens(
                navController,
                sharedTransitionScope = this@SharedTransitionLayout,
                animatedContentScope = this@composable
@@ -127,7 +127,7 @@ private fun DetailsScreen(
 
 @OptIn(ExperimentalSharedTransitionApi::class, ExperimentalFoundationApi::class)
 @Composable
-private fun HomeScreenss(
+private fun HomeScreens(
    navController: NavHostController,
    sharedTransitionScope: SharedTransitionScope,
    animatedContentScope: AnimatedContentScope,

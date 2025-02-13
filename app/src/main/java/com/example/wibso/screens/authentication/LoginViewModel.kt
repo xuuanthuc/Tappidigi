@@ -32,7 +32,7 @@ class LoginViewModel : ViewModel() {
 
     fun loginWithGoogle(context: Context, onSuccess: () -> Unit) {
         CoroutineScope(Dispatchers.IO).launch {
-            val idToken = getIdToken(context)
+            val idToken = "eyJhbGciOiJSUzI1NiIsImtpZCI6ImVlYzUzNGZhNWI4Y2FjYTIwMWNhOGQwZmY5NmI1NGM1NjIyMTBkMWUiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJhenAiOiIyMzUwNDQ3ODM5MjktdDBnZm1jdjI0b2V1aG4xaWhvbDZvZ2pjaW1wNnBwY3IuYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20iLCJhdWQiOiIyMzUwNDQ3ODM5MjktdGpkcGZyY3NtbXR2bmdrdGZ0NXRlMWllZ2o0ZTcxdXIuYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20iLCJzdWIiOiIxMDUwNzMxMjUwMjYzNDQ5MDYxNDEiLCJlbWFpbCI6InhhYmM4MTg1N0BnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwibmFtZSI6Ilh5eiBBQkMiLCJwaWN0dXJlIjoiaHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EvQUNnOG9jSWMxT19fRUNQX0tpcDYxNGN4RkRvanl4dGM5NWR6c3lVYXJaZ3hpaGJGM3ROdEl3PXM5Ni1jIiwiZ2l2ZW5fbmFtZSI6Ilh5eiIsImZhbWlseV9uYW1lIjoiQUJDIiwiaWF0IjoxNzM4NzQ1NTg2LCJleHAiOjE3Mzg3NDkxODZ9.mcDC7ke-EohbaOmLRjO_R0E0Q17a-klGhVcfIJQW86pywf5ZWoKsv1FxtwY8XOM4SRDqWPCNIb-TD4YGd92kjs54c-P-qj9AbU0kG6oxN8ekfbJkyoQr_MLGwJm0AfSgM172I_jYdDb7zO8-yGlAAR9mljJLrr5Be7q0vTiCZnhs7ERWo5UQgZgK_8ND7QFZczcCLYi1wSNYNODAvCr1bIpP_6lFZUZL0qnqMVLTxCu4ISwQkYT-EBCq71qjoZLRcuGjoe-bdUSNDdJ1GeQTuavvcXlTRYv0G2GEq6itjwD8wS4KuP0mOtQrOVHx0mpIe5dKLWmSA98bOqR6jh5PJQ"
 
             println("idToken: $idToken")
             val firebase = Firebase.firestore
