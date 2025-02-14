@@ -1,6 +1,7 @@
 package com.example.wibso.screens.chat.widgets
 
 import android.annotation.SuppressLint
+import android.net.Uri
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
@@ -36,12 +37,27 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.media3.common.C
+import androidx.media3.common.MediaItem
+import androidx.media3.common.MimeTypes
+import androidx.media3.common.Player
+import androidx.media3.exoplayer.ExoPlayer
 import coil3.compose.AsyncImage
-import xt.qc.tappidigi.R
+import com.example.wibso.models.Chat
+import com.example.wibso.models.Message
+import com.example.wibso.models.MessagePosition
+import com.example.wibso.models.MessageStatus
+import com.example.wibso.models.MessageType
+import com.example.wibso.models.User
+import com.example.wibso.screens.chat.ActionToolsViewModel
+import com.example.wibso.screens.profile.ProfileViewModel
+import com.example.wibso.utils.ChatThemes
 import kotlinx.datetime.Clock
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.Instant
@@ -58,14 +74,9 @@ import kotlinx.datetime.periodUntil
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.until
 import org.koin.compose.koinInject
-import com.example.wibso.models.Chat
-import com.example.wibso.models.Message
-import com.example.wibso.models.MessagePosition
-import com.example.wibso.models.MessageStatus
-import com.example.wibso.models.User
-import com.example.wibso.screens.profile.ProfileViewModel
-import com.example.wibso.utils.ChatThemes
-
+import xt.qc.tappidigi.R
+import java.util.Formatter
+import java.util.Locale
 
 @OptIn(FormatStringsInDatetimeFormats::class)
 fun Instant.toFormatedString(): String {
@@ -126,10 +137,14 @@ fun MessageComponent(
     onShowingDate: (Message?) -> Unit,
     showingDateId: String,
 ) {
+    val context = LocalContext.current
+    val toolsViewModel = viewModel { ActionToolsViewModel() }
     val showingTime = remember { mutableStateOf(false) }
     val profile = koinInject<ProfileViewModel>()
     val owner = msgOwner(message, group, private)
     val isMe = profile.userState.value?.uid == owner?.uid
+    var player: ExoPlayer?
+    var audioDuration: MutableState<String?> = remember { mutableStateOf(null) }
     val position: MessagePosition = when {
         prevMsg == null -> MessagePosition.FIRST
 
@@ -180,6 +195,57 @@ fun MessageComponent(
         }
     }
 
+    fun stringForTime(timeMs: Long): String {
+        val formatBuilder = StringBuilder()
+        val formatter = Formatter(formatBuilder, Locale.getDefault())
+
+        val totalSeconds = timeMs / 1000
+        val seconds = totalSeconds % 60
+        val minutes = (totalSeconds / 60) % 60
+        val hours = totalSeconds / 3600
+
+        formatBuilder.setLength(0)
+        return if (hours > 0) {
+            formatter.format("%d:%02d:%02d", hours, minutes, seconds).toString()
+        } else {
+            formatter.format("%02d:%02d", minutes, seconds).toString()
+        }
+    }
+    LaunchedEffect(Unit) {
+        if (message.messageType == MessageType.AUDIO.ordinal && message.attachment != null) {
+            player = ExoPlayer.Builder(context).build()
+            val uri = Uri.parse(message.attachment)
+            val media = MediaItem.Builder().setMimeType(MimeTypes.AUDIO_AAC).setUri(uri).build()
+            player?.apply {
+                setMediaItem(media)
+                prepare()
+                addListener(
+                    object: Player.Listener {
+                        override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
+                            super.onPlayWhenReadyChanged(playWhenReady, reason)
+                        }
+
+                        override fun onPlaybackStateChanged(playbackState: Int) {
+                            if (playbackState == Player.STATE_READY) {
+                                val duration = duration
+                                if (duration != C.TIME_UNSET) {
+                                    println(message.id)
+                                    println("Duration: $duration ms")
+                                    audioDuration.value = stringForTime(duration)
+                                } else {
+                                    println(message.id)
+                                    println("Duration not available")
+                                }
+                            }
+                            super.onPlaybackStateChanged(playbackState)
+                        }
+                    }
+                )
+                duration
+            }
+        }
+    }
+
 
     fun <T> gap(first: T, second: T): T {
         return if (isMe) first else second
@@ -225,7 +291,9 @@ fun MessageComponent(
         ) {
             Box(
                 contentAlignment = Alignment.Center,
-                modifier = Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 4.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp, bottom = 4.dp)
             ) {
                 Text(
                     msgTime.value.toFormatedString(),
@@ -234,9 +302,11 @@ fun MessageComponent(
             }
         }
         Row(
-            modifier = Modifier.padding(
-                end = gap(0.dp, 80.dp), start = gap(80.dp, 0.dp)
-            ).fillMaxWidth(),
+            modifier = Modifier
+                .padding(
+                    end = gap(0.dp, 80.dp), start = gap(80.dp, 0.dp)
+                )
+                .fillMaxWidth(),
             horizontalArrangement = gap(Arrangement.End, Arrangement.Start),
             verticalAlignment = Alignment.Bottom,
         ) {
@@ -245,35 +315,70 @@ fun MessageComponent(
                 isShow = !isMe && owner != null && (position == MessagePosition.SINGLE || position == MessagePosition.LAST)
             )
             Box(
-                Modifier.weight(1f).padding(vertical = 2.dp, horizontal = 8.dp),
+                Modifier
+                    .weight(1f)
+                    .padding(
+                        top = 2.dp,
+                        bottom = if (position == MessagePosition.LAST || position == MessagePosition.SINGLE) 12.dp else 2.dp,
+                        start = 8.dp,
+                        end = 8.dp
+                    ),
                 contentAlignment = gap(Alignment.CenterEnd, Alignment.CenterStart)
             ) {
-                Text(
-                    message.content,
-                    style = TextStyle(
-                        color = gap(Color.White, Color.Black)
-                    ),
-                    modifier = Modifier.pointerInput(message) {
-                        detectTapGestures(
-                            onTap = {
-                                if (message.status.value == MessageStatus.ERROR) {
-                                    onResend.invoke(message)
-                                } else if (fixedDatetimeShowing.value || message.status.value == MessageStatus.SENDING) {
-                                    return@detectTapGestures
-                                } else if (!showingTime.value) {
-                                    onShowingDate.invoke(message)
-                                } else {
-                                    onShowingDate.invoke(null)
-                                }
-                            },
+                Row(
+                    modifier = Modifier
+                        .pointerInput(message) {
+                            detectTapGestures(
+                                onTap = {
+                                    if (message.status.value == MessageStatus.ERROR) {
+                                        onResend.invoke(message)
+                                    } else if (fixedDatetimeShowing.value || message.status.value == MessageStatus.SENDING) {
+                                        return@detectTapGestures
+                                    } else if (message.messageType == MessageType.AUDIO.ordinal) {
+                                        toolsViewModel.play(context, Uri.parse(message.attachment))
+                                    } else if (!showingTime.value) {
+                                        onShowingDate.invoke(message)
+                                    } else {
+                                        onShowingDate.invoke(null)
+                                    }
+                                },
+                            )
+                        }
+                        .background(
+                            gap(
+                                theme.ownerColor, theme.otherColor,
+                            ).copy(alpha = if (message.status.value == MessageStatus.ERROR) 0.5f else 1f),
+                            shape = messageShape
                         )
-                    }.background(
-                        gap(
-                            theme.ownerColor, theme.otherColor,
-                        ).copy(alpha = if (message.status.value == MessageStatus.ERROR) 0.5f else 1f),
-                        shape = messageShape
-                    ).padding(9.dp),
-                )
+                        .padding(9.dp),
+                ) {
+                    AnimatedVisibility(
+                        visible = message.messageType == MessageType.AUDIO.ordinal,
+                    ) {
+                        Row {
+                            Icon(
+                                painter = painterResource(R.drawable.microphone),
+                                contentDescription = "",
+                                modifier = Modifier.size(18.dp),
+                                tint = gap(Color.White, Color.Black),
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                audioDuration.value ?: "",
+                                style = TextStyle(
+                                    color = gap(Color.White, Color.Black)
+                                ),
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                        }
+                    }
+                    Text(
+                        message.content,
+                        style = TextStyle(
+                            color = gap(Color.White, Color.Black)
+                        ),
+                    )
+                }
             }
             AnimatedVisibility(
                 visible = message.status.value == MessageStatus.ERROR,
@@ -299,7 +404,9 @@ fun MessageComponent(
             exit = slideOutVertically() + shrinkVertically(shrinkTowards = Alignment.Top) + fadeOut()
         ) {
             Box(
-                modifier = Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 8.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 4.dp, bottom = 8.dp),
                 contentAlignment = Alignment.CenterEnd
             ) {
                 Text(
@@ -323,7 +430,9 @@ fun MsgAvatar(user: User?, isShow: Boolean) {
             AsyncImage(
                 model = user?.photoUrl,
                 contentDescription = null,
-                modifier = Modifier.size(30.dp).clip(CircleShape)
+                modifier = Modifier
+                    .size(30.dp)
+                    .clip(CircleShape)
             )
         } else {
             Spacer(modifier = Modifier.size(30.dp))

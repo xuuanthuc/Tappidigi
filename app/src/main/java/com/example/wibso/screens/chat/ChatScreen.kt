@@ -1,7 +1,9 @@
 package com.example.wibso.screens.chat
 
 import MessageTextField
+import android.os.Build
 import androidx.activity.compose.BackHandler
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -34,12 +36,12 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.wibso.AppViewModel
 import com.example.wibso.models.Chat
+import com.example.wibso.models.MessageType
 import com.example.wibso.screens.chat.widgets.AlbumComponent
 import com.example.wibso.screens.chat.widgets.CameraComponent
 import com.example.wibso.screens.chat.widgets.ChatEmojisComponent
 import com.example.wibso.screens.chat.widgets.ChatHeadingComponent
 import com.example.wibso.screens.chat.widgets.MessageComponent
-import com.example.wibso.screens.profile.ProfileViewModel
 import com.example.wibso.utils.Status
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -50,9 +52,9 @@ enum class ActionChat {
     WAIT, SEND, RESEND
 }
 
+@RequiresApi(Build.VERSION_CODES.S)
 @Composable
 fun ChatScreen(group: Chat.GroupChat? = null, private: Chat.PrivateChat? = null) {
-    val profile = koinInject<ProfileViewModel>()
     val action: MutableState<ActionChat?> = remember { mutableStateOf(ActionChat.WAIT) }
     val chatViewModel: ChatViewModel = viewModel {
         ChatViewModel(
@@ -90,7 +92,7 @@ fun ChatScreen(group: Chat.GroupChat? = null, private: Chat.PrivateChat? = null)
     }
 
     BackHandler {
-        if(chatViewModel.actionState.value != ActionToolState.NONE ) {
+        if (chatViewModel.actionState.value != ActionToolState.NONE) {
             chatViewModel.actionState.value = ActionToolState.NONE
         } else {
             appViewModel.navHostController.popBackStack()
@@ -104,7 +106,7 @@ fun ChatScreen(group: Chat.GroupChat? = null, private: Chat.PrivateChat? = null)
             .background(chatViewModel.theme.value.backgroundColor)
             .pointerInput(Unit) {
                 detectTapGestures(onTap = {
-                    if(chatViewModel.actionState.value == ActionToolState.AUDIO) {
+                    if (chatViewModel.actionState.value == ActionToolState.AUDIO) {
                         return@detectTapGestures
                     }
                     focusManager.clearFocus()
@@ -191,13 +193,21 @@ fun ChatScreen(group: Chat.GroupChat? = null, private: Chat.PrivateChat? = null)
 
             MessageTextField(
                 chatViewModel = chatViewModel,
+                private = private,
                 contentController = contentController,
                 onSend = {
                     scope.launch {
                         lazyColumnListState.animateScrollToItem(0)
-                        chatViewModel.sendMessage(
-                            it, private?.sender?.uid ?: ""
-                        )
+                        when (it.messageType) {
+                            MessageType.TEXT.ordinal -> {
+                                chatViewModel.sendMessage(it)
+                            }
+
+                            MessageType.AUDIO.ordinal -> {
+                                chatViewModel.uploadAudioToFirebaseStorage(it)
+                            }
+
+                        }
                     }
                 },
             )

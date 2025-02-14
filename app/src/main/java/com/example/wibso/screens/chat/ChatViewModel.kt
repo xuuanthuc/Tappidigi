@@ -1,18 +1,11 @@
 package com.example.wibso.screens.chat
 
+import android.net.Uri
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.ViewModel
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
-import kotlinx.serialization.ExperimentalSerializationApi
 import com.example.wibso.api.Usecase
 import com.example.wibso.models.AccountRoom
 import com.example.wibso.models.Chat
@@ -20,8 +13,8 @@ import com.example.wibso.models.Emoji
 import com.example.wibso.models.Message
 import com.example.wibso.models.MessageDocumentSnapshot
 import com.example.wibso.models.MessageStatus
-import com.example.wibso.models.MessageType
 import com.example.wibso.models.User
+import com.example.wibso.screens.create.UploadCallback
 import com.example.wibso.utils.ChatThemes
 import com.example.wibso.utils.GreenPalette
 import com.example.wibso.utils.Status
@@ -30,12 +23,27 @@ import com.google.firebase.firestore.DocumentChange
 import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.firestore
 import com.google.firebase.firestore.toObject
+import com.google.firebase.storage.FirebaseStorage
+import com.google.firebase.storage.StorageMetadata
+import com.google.firebase.storage.StorageReference
+import com.google.firebase.storage.storageMetadata
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.properties.Properties
 import kotlinx.serialization.properties.encodeToMap
+import java.io.File
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
+
 
 enum class ActionToolState {
     AUDIO,
@@ -49,6 +57,7 @@ class ChatViewModel(groupUsers: List<User>?, sender: User?, receiver: User?) : V
     private val firebase = Firebase.firestore
     private val _groupUsers = MutableStateFlow<List<User>>(listOf())
     private val groupUsers: StateFlow<List<User>> = _groupUsers.asStateFlow()
+    private val storage = FirebaseStorage.getInstance("gs://tappidigi.firebasestorage.app")
 
     private val _messages = MutableStateFlow<SnapshotStateList<Message>>(mutableStateListOf())
     val message: StateFlow<List<Message>> = _messages.asStateFlow()
@@ -79,16 +88,11 @@ class ChatViewModel(groupUsers: List<User>?, sender: User?, receiver: User?) : V
     }
 
     @OptIn(ExperimentalSerializationApi::class)
-    fun sendMessage(content: String, uid: String) {
-        if (roomId.value == null || uid.isEmpty()) return
-        val message = Message(
-            content = content,
-            ownerId = uid,
-            messageType = MessageType.TEXT.ordinal,
-            status = mutableStateOf(MessageStatus.SENDING),
-        )
+    fun sendMessage(message: Message) {
+        if (roomId.value == null || message.ownerId.isEmpty() || message.content.isEmpty()) return
         _messages.value.add(0, message)
         try {
+            println("Sending message!")
             firebase.collection("chats").document(roomId.value!!).collection("messages")
                 .document(message.id).set(Properties.encodeToMap(message))
         } catch (e: Exception) {
@@ -97,6 +101,44 @@ class ChatViewModel(groupUsers: List<User>?, sender: User?, receiver: User?) : V
         }
     }
 
+    fun uploadImagesToFirebaseStorage(uris: ArrayList<Uri>, callback: UploadCallback) {
+        CoroutineScope(Dispatchers.IO).launch {
+            val storageRef: StorageReference = storage.reference
+            val downloadUrls = ArrayList<Uri>()
+
+            try {
+                uris.forEach { uri ->
+                    val imageRef = storageRef.child("images/${System.currentTimeMillis()}.jpg")
+                    imageRef.putFile(uri).await()
+                    val downloadUrl = imageRef.downloadUrl.await()
+                    downloadUrls.add(downloadUrl)
+                }
+                callback.onSuccess(downloadUrls)
+            } catch (exception: Exception) {
+                callback.onFailure(exception)
+            }
+        }
+    }
+
+    fun uploadAudioToFirebaseStorage(message: Message) {
+        CoroutineScope(Dispatchers.IO).launch {
+            val storageRef: StorageReference = storage.reference
+            try {
+                println(message.attachment)
+                if(message.attachment == null) return@launch
+                val metadata = StorageMetadata.Builder().setCustomMetadata("lastID", File(message.attachment).path).build()
+                val imageRef = storageRef.child("audios/${System.currentTimeMillis()}.aac")
+                val uri = Uri.fromFile(File(message.attachment))
+                imageRef.putFile(uri, metadata).await()
+                val downloadUrl = imageRef.downloadUrl.await()
+                println(downloadUrl)
+                val newMessage = message.copy(attachment = downloadUrl.toString())
+                sendMessage(newMessage)
+            } catch (exception: Exception) {
+                println(exception)
+            }
+        }
+    }
 
     @OptIn(ExperimentalSerializationApi::class)
     fun reSendMessage(message: Message) {

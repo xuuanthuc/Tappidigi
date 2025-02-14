@@ -11,6 +11,7 @@ import kotlin.uuid.Uuid
 @Serializable
 data class Message @OptIn(ExperimentalUuidApi::class) constructor(
     val content: String = "",
+    val attachment: String? = null,
     val ownerId: String = "",
     val messageType: Int = 0,
     val createdAt: Long = Timestamp.now().seconds,
@@ -25,6 +26,7 @@ data class Message @OptIn(ExperimentalUuidApi::class) constructor(
 data class MessageDocumentSnapshot (
     val content: String = "",
     val ownerId: String = "",
+    val attachment: String? = null,
     val messageType: Int = 0,
     val createdAt: Long = Timestamp.now().seconds,
     val updatedAt: Long = Timestamp.now().seconds,

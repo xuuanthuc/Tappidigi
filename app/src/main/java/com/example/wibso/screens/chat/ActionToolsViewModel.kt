@@ -18,11 +18,16 @@ import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.media3.common.MediaItem
+import androidx.media3.common.MimeTypes
+import androidx.media3.common.Player
+import androidx.media3.common.Timeline
+import androidx.media3.common.Tracks
 import androidx.media3.exoplayer.ExoPlayer
 import com.example.wibso.models.GalleryContent
 import com.example.wibso.models.GalleryType
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -31,6 +36,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.datetime.Instant
 import java.io.File
 import java.io.FileOutputStream
+import java.io.IOException
 
 class ActionToolsViewModel : ViewModel() {
 
@@ -38,9 +44,13 @@ class ActionToolsViewModel : ViewModel() {
     val data: StateFlow<List<GalleryContent>> = _data.asStateFlow()
 
     private var mediaRecorder: MediaRecorder? = null
-    private var exoPlayer: ExoPlayer? = null
+    private var exoPlayer = MutableStateFlow<ExoPlayer?>(null)
+
+    val player:  StateFlow<ExoPlayer?> = exoPlayer.asStateFlow()
 
     private var cacheAudio: File? = null
+
+    val audio: File? get() = cacheAudio
 
     fun checkCameraPermission(
         context: Context,
@@ -84,15 +94,57 @@ class ActionToolsViewModel : ViewModel() {
     }
 
     private fun initPlayer(context: Context): ExoPlayer {
-        return exoPlayer ?: ExoPlayer.Builder(context).build()
+        exoPlayer.value = ExoPlayer.Builder(context).build()
+        exoPlayer.value!!.addListener(
+            object : Player.Listener {
+                override fun onIsPlayingChanged(isPlaying: Boolean) {
+                    if (isPlaying) {
+                        println("play")
+
+                        // Active playback.
+                    } else {
+                        println("stop")
+
+                        // Not playing because playback is paused, ended, suppressed, or the player
+                        // is buffering, stopped or failed. Check player.playWhenReady,
+                        // player.playbackState, player.playbackSuppressionReason and
+                        // player.playerError for details.
+                    }
+                }
+
+                override fun onTimelineChanged(timeline: Timeline, reason: Int) {
+                    println(timeline.periodCount)
+                    super.onTimelineChanged(timeline, reason)
+                }
+
+                override fun onTracksChanged(tracks: Tracks) {
+                    println(tracks.toString())
+
+                    super.onTracksChanged(tracks)
+                }
+
+                override fun onPlaybackStateChanged(playbackState: Int) {
+                    if (playbackState == Player.STATE_READY) {
+                        println(exoPlayer.value!!.duration)
+                    }
+                    super.onPlaybackStateChanged(playbackState)
+                }
+
+                override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
+
+                    super.onPlayWhenReadyChanged(playWhenReady, reason)
+                }
+            }
+        )
+        return exoPlayer.value as ExoPlayer
     }
 
     @RequiresApi(Build.VERSION_CODES.S)
     fun recordAudio(context: Context) {
-        cacheAudio = File(context.cacheDir, "audio.mp3")
+        cacheAudio = File(context.cacheDir, "audio.acc")
         initRecorder(context).apply {
             setAudioSource(MediaRecorder.AudioSource.MIC)
-            setOutputFormat(MediaRecorder.OutputFormat.MPEG_2_TS)
+            setOutputFormat(MediaRecorder.OutputFormat.AAC_ADTS)
             setOutputFile(FileOutputStream(cacheAudio).fd)
             setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
             prepare()
@@ -101,15 +153,38 @@ class ActionToolsViewModel : ViewModel() {
     }
 
     fun stopRecord() {
-        mediaRecorder?.stop()
-        mediaRecorder?.release()
+        mediaRecorder?.apply {
+            stop()
+            release()
+        }
+        mediaRecorder = null
         println(cacheAudio?.path)
     }
 
-    fun play(context: Context) {
-        initPlayer(context).setMediaItem(MediaItem.fromUri(Uri.fromFile(cacheAudio)))
-        exoPlayer?.prepare()
-        exoPlayer?.play()
+    fun play(context: Context, uri: Uri) {
+        println("Play: $uri")
+
+        try {
+            if(exoPlayer.value != null && exoPlayer.value?.isPlaying == true) {
+                exoPlayer.value?.apply {
+                    stop()
+                    release()
+                }
+                exoPlayer.value = null
+            }
+            CoroutineScope(Dispatchers.Main).launch {
+                delay(500)
+                val media = MediaItem.Builder().setMimeType(MimeTypes.AUDIO_AAC).setUri(uri).build()
+                initPlayer(context)
+                exoPlayer.value?.apply {
+                    setMediaItem(media)
+                    prepare()
+                    play()
+                }
+            }
+        } catch (e: IOException) {
+            println("Play error: $e")
+        }
     }
 
 

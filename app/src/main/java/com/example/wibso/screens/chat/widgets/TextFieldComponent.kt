@@ -1,4 +1,5 @@
 import android.media.MediaRecorder
+import android.net.Uri
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -52,6 +53,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.media3.common.MediaItem
+import com.example.wibso.models.Chat
+import com.example.wibso.models.Message
+import com.example.wibso.models.MessageStatus
+import com.example.wibso.models.MessageType
 import com.example.wibso.screens.chat.ActionToolState
 import com.example.wibso.screens.chat.ActionToolsViewModel
 import xt.qc.tappidigi.R
@@ -61,20 +67,20 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.io.File
 
 @RequiresApi(Build.VERSION_CODES.S)
 @Composable
 fun MessageTextField(
     chatViewModel: ChatViewModel,
+    private: Chat.PrivateChat?,
     contentController: MutableState<TextFieldValue>,
-    onSend: (String) -> Unit,
+    onSend: (Message) -> Unit,
 ) {
     var isLabelVisible by remember { mutableStateOf(true) }
     val maxChatLines = remember { mutableIntStateOf(1) }
     var isRecordingAudio by remember { mutableStateOf(false) }
     LaunchedEffect(contentController.value.text) {
-        isLabelVisible = contentController.value.text.isEmpty()
+        isLabelVisible = contentController.value.text.trim().isEmpty()
     }
     LaunchedEffect(chatViewModel.actionState.value) {
         isRecordingAudio = chatViewModel.actionState.value == ActionToolState.AUDIO
@@ -379,7 +385,7 @@ fun MessageTextField(
                             )
                         }
                     }
-                    if (isLabelVisible) {
+                    if (contentController.value.text.isEmpty() && !isRecordingAudio) {
                         Text(
                             "Type a message...", style = TextStyle(
                                 color = Color.Gray,
@@ -407,9 +413,36 @@ fun MessageTextField(
         ) {
             Button(
                 onClick = {
-                    val message = contentController.value.text
-                    contentController.value = TextFieldValue("")
-                    onSend.invoke(message)
+                    when (chatViewModel.actionState.value) {
+                        ActionToolState.AUDIO -> {
+                            chatViewModel.actionState.value = ActionToolState.NONE
+                            isLabelVisible = contentController.value.text.isEmpty()
+                            toolsViewModel.stopRecord()
+
+                            val msg = Message(
+                                content = "AUDIO",
+                                attachment = toolsViewModel.audio?.path,
+                                ownerId = private?.sender?.uid ?: "",
+                                messageType = MessageType.AUDIO.ordinal,
+                                status = mutableStateOf(MessageStatus.SENDING),
+                            )
+                            onSend.invoke(msg)
+                        }
+                        ActionToolState.CAMERA -> TODO()
+                        ActionToolState.GALLERY -> TODO()
+                        ActionToolState.NONE, ActionToolState.EMOJI -> {
+                            val message = contentController.value.text
+                            val msg = Message(
+                                content = message.trim(),
+                                ownerId = private?.sender?.uid ?: "",
+                                messageType = MessageType.TEXT.ordinal,
+                                status = mutableStateOf(MessageStatus.SENDING),
+                            )
+                            onSend.invoke(msg)
+                            contentController.value = TextFieldValue("")
+                        }
+                    }
+
                 },
                 modifier = Modifier.size(sentMessageButtonSize.dp),
                 contentPadding = PaddingValues(0.dp),
