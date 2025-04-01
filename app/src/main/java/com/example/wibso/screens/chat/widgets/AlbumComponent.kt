@@ -11,14 +11,20 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
@@ -42,8 +48,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.window.Popup
+import androidx.compose.ui.zIndex
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.video.VideoFrameDecoder
@@ -74,7 +85,6 @@ fun AlbumComponent(chatViewModel: ChatViewModel, toolsViewModel: ActionToolsView
     val gridStates = remember {
         LazyGridState()
     }
-
     ModalBottomSheet(
         onDismissRequest = {
             chatViewModel.actionState.value = ActionToolState.NONE
@@ -92,25 +102,27 @@ fun AlbumComponent(chatViewModel: ChatViewModel, toolsViewModel: ActionToolsView
 
         },
     ) {
-        Column {
-            LazyVerticalGrid(
-                columns = GridCells.Adaptive(minSize = 80.dp),
-                modifier = Modifier.weight(1f),
-                state = gridStates,
-                horizontalArrangement = Arrangement.spacedBy(2.dp),
-                verticalArrangement = Arrangement.spacedBy(2.dp),
-            ) {
-                items(galleryContents.size) { index ->
-                    val content = galleryContents[index]
-                    ItemGallery(
-                        content = content,
-                        style = ChatGalleryStyle(),
-                        selectionList = selectionList
-                    )
-                }
+        LazyVerticalGrid(
+            columns = GridCells.Adaptive(minSize = 80.dp),
+            modifier = Modifier.fillMaxHeight(),
+            state = gridStates,
+            horizontalArrangement = Arrangement.spacedBy(2.dp),
+            verticalArrangement = Arrangement.spacedBy(2.dp),
+        ) {
+            items(galleryContents.size) { index ->
+                val content = galleryContents[index]
+                ItemGallery(
+                    content = content, style = ChatGalleryStyle(), selectionList = selectionList
+                )
             }
-            Box {
-                Text("send")
+        }
+        if (selectionList.isNotEmpty()) {
+            Popup(
+                alignment = Alignment.BottomCenter
+            ) {
+                Button(onClick = {}) {
+                    Text("Send")
+                }
             }
         }
     }
@@ -152,14 +164,12 @@ fun GalleryComponent(
                     Text("Recent")
                 }
                 Spacer(modifier = Modifier.weight(1f))
-                Box(
-                    modifier = Modifier
-                        .clickable {
-                            onPick(selectionList)
-                            onDismissRequest()
-                        }
-                        .padding(16.dp)
-                ) {
+                Box(modifier = Modifier
+                    .clickable {
+                        onPick(selectionList)
+                        onDismissRequest()
+                    }
+                    .padding(16.dp)) {
                     Icon(painter = painterResource(R.drawable.send), contentDescription = "")
                 }
             }
@@ -177,9 +187,7 @@ fun GalleryComponent(
                 items(galleryContents.size) { index ->
                     val content = galleryContents[index]
                     ItemGallery(
-                        content = content,
-                        style = PostGalleryStyle(),
-                        selectionList = selectionList
+                        content = content, style = PostGalleryStyle(), selectionList = selectionList
                     )
                 }
             }
@@ -192,9 +200,7 @@ fun GalleryComponent(
 
 @Composable
 fun ItemGallery(
-    content: GalleryContent,
-    style: ItemGalleryStyle,
-    selectionList: MutableList<GalleryContent>
+    content: GalleryContent, style: ItemGalleryStyle, selectionList: MutableList<GalleryContent>
 ) {
     val context = LocalContext.current
     val maxWidth = LocalConfiguration.current.screenWidthDp.dp
@@ -260,8 +266,7 @@ fun ItemGallery(
                         .width(20.dp)
                         .height(20.dp)
                         .background(
-                            color = style.color,
-                            shape = RoundedCornerShape(2.dp)
+                            color = style.color, shape = RoundedCornerShape(2.dp)
                         ), contentAlignment = Alignment.Center
                 ) {
                     if (selectedIndex.value != 0) Text(

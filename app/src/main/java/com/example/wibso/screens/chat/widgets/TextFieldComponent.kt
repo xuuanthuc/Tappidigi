@@ -1,5 +1,3 @@
-import android.media.MediaRecorder
-import android.net.Uri
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -18,19 +16,14 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.IntrinsicSize
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonColors
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -47,13 +40,11 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.media3.common.MediaItem
 import com.example.wibso.models.Chat
 import com.example.wibso.models.Message
 import com.example.wibso.models.MessageStatus
@@ -62,6 +53,8 @@ import com.example.wibso.screens.chat.ActionToolState
 import com.example.wibso.screens.chat.ActionToolsViewModel
 import xt.qc.tappidigi.R
 import com.example.wibso.screens.chat.ChatViewModel
+import com.example.wibso.ui.components.IconButton
+import com.example.wibso.ui.components.IconConfig
 import com.example.wibso.utils.ColorsPalette
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -170,25 +163,16 @@ fun MessageTextField(
             enter = expandHorizontally(),
             exit = shrinkOut(shrinkTowards = Alignment.CenterEnd)
         ) {
-            Button(
+            IconButton(
+                decoration = IconConfig().copyWith(
+                    painterResource = R.drawable.arrow_left,
+                    contentColor = chatViewModel.theme.value.ownerColor,
+                ),
                 onClick = {
                     toolbarIsShowing.value = true
+
                 },
-                modifier = Modifier.size(40.dp),
-                contentPadding = PaddingValues(0.dp),
-                shape = RoundedCornerShape(8.dp),
-                colors = ButtonColors(
-                    containerColor = Color.Transparent,
-                    contentColor = chatViewModel.theme.value.ownerColor,
-                    disabledContainerColor = Color.Gray,
-                    disabledContentColor = Color.Gray
-                )
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.arrow_left),
-                    contentDescription = "",
-                )
-            }
+            )
         }
 
         AnimatedVisibility(
@@ -197,26 +181,17 @@ fun MessageTextField(
             enter = expandHorizontally(),
             exit = shrinkOut(shrinkTowards = Alignment.CenterEnd)
         ) {
-            Button(
+            IconButton(
+                decoration = IconConfig().copyWith(
+                    painterResource = R.drawable.delete,
+                    contentColor = chatViewModel.theme.value.ownerColor,
+                ),
                 onClick = {
                     chatViewModel.actionState.value = ActionToolState.NONE
                     isLabelVisible = contentController.value.text.isEmpty()
                     toolsViewModel.stopRecord()
                 },
-                modifier = Modifier.size(40.dp),
-                contentPadding = PaddingValues(0.dp),
-                shape = RoundedCornerShape(8.dp),
-                colors = ButtonColors(
-                    containerColor = Color.Transparent,
-                    contentColor = chatViewModel.theme.value.ownerColor,
-                    disabledContainerColor = Color.Gray,
-                    disabledContentColor = Color.Gray
-                )
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.delete), contentDescription = ""
-                )
-            }
+            )
         }
 
         AnimatedVisibility(
@@ -228,7 +203,11 @@ fun MessageTextField(
             )
         ) {
             Row {
-                Button(
+                IconButton(
+                    decoration = IconConfig().copyWith(
+                        painterResource = R.drawable.camera,
+                        contentColor = chatViewModel.theme.value.ownerColor,
+                    ),
                     onClick = {
                         if (chatViewModel.actionState.value != ActionToolState.NONE) {
                             chatViewModel.actionState.value = ActionToolState.NONE
@@ -241,21 +220,12 @@ fun MessageTextField(
                             }
                         }
                     },
-                    modifier = Modifier.size(40.dp),
-                    contentPadding = PaddingValues(0.dp),
-                    shape = RoundedCornerShape(8.dp),
-                    colors = ButtonColors(
-                        containerColor = Color.Transparent,
+                )
+                IconButton(
+                    decoration = IconConfig().copyWith(
+                        painterResource = R.drawable.album,
                         contentColor = chatViewModel.theme.value.ownerColor,
-                        disabledContainerColor = Color.Gray,
-                        disabledContentColor = Color.Gray
-                    )
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.camera), contentDescription = ""
-                    )
-                }
-                Button(
+                    ),
                     onClick = {
                         if (chatViewModel.actionState.value != ActionToolState.NONE) {
                             chatViewModel.actionState.value = ActionToolState.NONE
@@ -265,21 +235,12 @@ fun MessageTextField(
                             }
                         }
                     },
-                    modifier = Modifier.size(40.dp),
-                    contentPadding = PaddingValues(0.dp),
-                    shape = RoundedCornerShape(8.dp),
-                    colors = ButtonColors(
-                        containerColor = Color.Transparent,
+                )
+                IconButton(
+                    decoration = IconConfig().copyWith(
+                        painterResource = R.drawable.microphone,
                         contentColor = chatViewModel.theme.value.ownerColor,
-                        disabledContainerColor = Color.Gray,
-                        disabledContentColor = Color.Gray
-                    )
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.album), contentDescription = ""
-                    )
-                }
-                Button(
+                        ),
                     onClick = {
                         if (chatViewModel.actionState.value != ActionToolState.NONE) {
                             chatViewModel.actionState.value = ActionToolState.NONE
@@ -292,20 +253,7 @@ fun MessageTextField(
                             }
                         }
                     },
-                    modifier = Modifier.size(40.dp),
-                    contentPadding = PaddingValues(0.dp),
-                    shape = RoundedCornerShape(8.dp),
-                    colors = ButtonColors(
-                        containerColor = Color.Transparent,
-                        contentColor = chatViewModel.theme.value.ownerColor,
-                        disabledContainerColor = Color.Gray,
-                        disabledContentColor = Color.Gray
-                    )
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.microphone), contentDescription = ""
-                    )
-                }
+                )
             }
         }
 
@@ -345,7 +293,19 @@ fun MessageTextField(
                                 innerTextField()
                             }
                         }
-                        Button(
+                        IconButton(
+                            decoration = IconConfig().copyWith(
+                                painterResource = when (chatViewModel.actionState.value) {
+                                    ActionToolState.EMOJI -> {
+                                        R.drawable.keyboard
+                                    }
+
+                                    else -> {
+                                        R.drawable.emoji
+                                    }
+                                },
+                                contentColor = chatViewModel.theme.value.sendButtonColor,
+                            ),
                             onClick = {
                                 CoroutineScope(Dispatchers.Main).launch {
                                     if (chatViewModel.actionState.value != ActionToolState.NONE) {
@@ -360,30 +320,7 @@ fun MessageTextField(
                                     }
                                 }
                             },
-                            modifier = Modifier.size(40.dp),
-                            contentPadding = PaddingValues(0.dp),
-                            shape = RoundedCornerShape(8.dp),
-                            colors = ButtonColors(
-                                containerColor = Color.Transparent,
-                                contentColor = chatViewModel.theme.value.sendButtonColor,
-                                disabledContainerColor = Color.Gray,
-                                disabledContentColor = Color.Gray
-                            )
-                        ) {
-                            Icon(
-                                painter = painterResource(
-                                    when (chatViewModel.actionState.value) {
-                                        ActionToolState.EMOJI -> {
-                                            R.drawable.keyboard
-                                        }
-
-                                        else -> {
-                                            R.drawable.emoji
-                                        }
-                                    }
-                                ), contentDescription = ""
-                            )
-                        }
+                        )
                     }
                     if (contentController.value.text.isEmpty() && !isRecordingAudio) {
                         Text(
@@ -411,7 +348,12 @@ fun MessageTextField(
             enter = fadeIn(animationSpec = tween(durationMillis = animationDuration)),
             exit = fadeOut(animationSpec = tween(durationMillis = animationDuration))
         ) {
-            Button(
+            IconButton(
+                decoration = IconConfig().copyWith(
+                    painterResource = R.drawable.send,
+                    containerColor = chatViewModel.theme.value.sendButtonColor,
+                    contentColor = Color.White,
+                ),
                 onClick = {
                     when (chatViewModel.actionState.value) {
                         ActionToolState.AUDIO -> {
@@ -428,6 +370,7 @@ fun MessageTextField(
                             )
                             onSend.invoke(msg)
                         }
+
                         ActionToolState.CAMERA -> TODO()
                         ActionToolState.GALLERY -> TODO()
                         ActionToolState.NONE, ActionToolState.EMOJI -> {
@@ -442,20 +385,8 @@ fun MessageTextField(
                             contentController.value = TextFieldValue("")
                         }
                     }
-
                 },
-                modifier = Modifier.size(sentMessageButtonSize.dp),
-                contentPadding = PaddingValues(0.dp),
-                shape = RoundedCornerShape(8.dp),
-                colors = ButtonColors(
-                    containerColor = chatViewModel.theme.value.sendButtonColor,
-                    contentColor = Color.White,
-                    disabledContainerColor = Color.Gray,
-                    disabledContentColor = Color.Gray
-                )
-            ) {
-                Icon(painter = painterResource(R.drawable.send), contentDescription = "")
-            }
+            )
         }
     }
 }
