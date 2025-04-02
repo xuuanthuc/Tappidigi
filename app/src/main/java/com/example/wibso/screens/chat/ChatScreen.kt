@@ -216,7 +216,14 @@ fun ChatScreen(group: Chat.GroupChat? = null, private: Chat.PrivateChat? = null)
             )
             if (chatViewModel.actionState.value == ActionToolState.GALLERY) {
                 AlbumComponent(
-                    chatViewModel = chatViewModel, toolsViewModel = toolsViewModel
+                    chatViewModel = chatViewModel, toolsViewModel = toolsViewModel,
+                    private = private,
+                    onSend = {
+                        scope.launch {
+                            lazyColumnListState.animateScrollToItem(0)
+                            chatViewModel.sendMessage(it)
+                        }
+                    }
                 )
             }
         }

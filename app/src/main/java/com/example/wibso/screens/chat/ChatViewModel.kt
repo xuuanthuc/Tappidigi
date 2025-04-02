@@ -108,7 +108,14 @@ class ChatViewModel(groupUsers: List<User>?, sender: User?, receiver: User?) : V
 
             try {
                 uris.forEach { uri ->
-                    val imageRef = storageRef.child("images/${System.currentTimeMillis()}.jpg")
+                    val imageRef = storageRef.child(
+                        "images/${System.currentTimeMillis()}.${
+                            uri.path?.substringAfterLast(
+                                ".",
+                                "jpg"
+                            )
+                        }"
+                    )
                     imageRef.putFile(uri).await()
                     val downloadUrl = imageRef.downloadUrl.await()
                     downloadUrls.add(downloadUrl)
@@ -125,8 +132,9 @@ class ChatViewModel(groupUsers: List<User>?, sender: User?, receiver: User?) : V
             val storageRef: StorageReference = storage.reference
             try {
                 println(message.attachment)
-                if(message.attachment == null) return@launch
-                val metadata = StorageMetadata.Builder().setCustomMetadata("lastID", File(message.attachment).path).build()
+                if (message.attachment == null) return@launch
+                val metadata = StorageMetadata.Builder()
+                    .setCustomMetadata("lastID", File(message.attachment).path).build()
                 val imageRef = storageRef.child("audios/${System.currentTimeMillis()}.aac")
                 val uri = Uri.fromFile(File(message.attachment))
                 imageRef.putFile(uri, metadata).await()

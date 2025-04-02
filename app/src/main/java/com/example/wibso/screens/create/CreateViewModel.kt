@@ -30,7 +30,6 @@ class CreateViewModel : ViewModel() {
     private val storage = FirebaseStorage.getInstance("gs://tappidigi.firebasestorage.app")
     var actionState: MutableState<ActionToolState> = mutableStateOf(ActionToolState.NONE)
 
-    @OptIn(ExperimentalSerializationApi::class)
     fun createPost(
         title: String,
         description: String,
@@ -77,7 +76,14 @@ class CreateViewModel : ViewModel() {
 
             try {
                 uris.forEach { uri ->
-                    val imageRef = storageRef.child("images/${System.currentTimeMillis()}.jpg")
+                    val imageRef = storageRef.child(
+                        "images/${System.currentTimeMillis()}.${
+                            uri.path?.substringAfterLast(
+                                ".",
+                                "jpg"
+                            )
+                        }"
+                    )
                     imageRef.putFile(uri).await()
                     val downloadUrl = imageRef.downloadUrl.await()
                     downloadUrls.add(downloadUrl)
